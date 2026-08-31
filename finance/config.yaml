@@ -1,5 +1,5 @@
 name: HA Briareus Finance
-version: "0.1.6"
+version: "0.1.7"
 slug: ha_briareus_finance
 description: Personal finance and budget manager for Home Assistant
 url: https://github.com/chukin-a/ha-briareus-finance.git
@@ -18,7 +18,7 @@ panel_title: Finance
 homeassistant_api: true
 
 map:
-  - addon_config:rw
+  - app_config:rw
 
 options:
   currency: UAH
