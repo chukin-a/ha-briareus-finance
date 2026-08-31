@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.9
+
+- Fixed fiscal receipt item extraction for namespaced and extended DPS XML fields.
+- Added manual refresh of receipt data from the transaction details view.
+
 ## 0.3.8
 
 - Moved fiscal receipt lookup and parsing into the transactions module.
