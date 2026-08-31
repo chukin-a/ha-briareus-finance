@@ -6,9 +6,10 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { PlanningModule } from './modules/planning/planning.module';
+import { RealtimeController } from './shared/realtime/realtime.controller';
 
 @Module({
   imports: [AccountsModule, CategoriesModule, TransactionsModule, UsersModule, ProjectsModule, PlanningModule],
-  controllers: [AppController],
+  controllers: [AppController, RealtimeController],
 })
 export class AppModule {}

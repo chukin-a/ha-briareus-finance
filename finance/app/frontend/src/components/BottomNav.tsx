@@ -7,7 +7,7 @@ const items = [
   { id: 'analytics', label: 'Аналітика', Icon: ChartPie },
   { id: 'payments', label: 'Платежі', Icon: CalendarClock },
   { id: 'transactions', label: 'Транзакції', Icon: List },
-  { id: 'budgets', label: 'Бюджети', Icon: Target },
+  { id: 'budgets', label: 'Планування', Icon: Target },
   { id: 'accounts', label: 'Рахунки', Icon: WalletCards },
   { id: 'settings', label: 'Налаштування', Icon: Settings },
 ] as const;
