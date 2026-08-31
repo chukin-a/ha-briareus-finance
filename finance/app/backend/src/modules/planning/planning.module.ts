@@ -20,7 +20,7 @@ class PlanningController {
   @Delete('recurring/:id') deleteRecurring(@Param('id') id:string){return this.extended.archiveRecurring(id);}
   @Get('recurring/occurrences') occurrences(){return this.extended.listOccurrences();}
   @Post('recurring/generate') generate(@Body('days') days?:number){return this.extended.generateOccurrences(days);}
-  @Post('recurring/occurrences/:id/confirm') async confirmOccurrence(@Param('id') id:string,@Headers() h:HeadersMap,@Body('accountId') accountId?:string){return this.extended.confirmOccurrence(id,await this.finance.getCurrentUser(h),accountId);}
+  @Post('recurring/occurrences/:id/confirm') async confirmOccurrence(@Param('id') id:string,@Headers() h:HeadersMap,@Body('accountId') accountId?:string,@Body('amountMinor') amountMinor?:number){const owner=await this.finance.getCurrentUser(h);if(!accountId) return this.extended.confirmOccurrence(id,owner);if(amountMinor===undefined)return this.extended.confirmOccurrence(id,owner,accountId);return this.extended.confirmOccurrenceWithAmount(id,owner,accountId,amountMinor);}
   @Post('recurring/occurrences/:id/skip') skipOccurrence(@Param('id') id:string){return this.extended.skipOccurrence(id);}
   @Get('installments') installments() { return this.extended.listInstallments(); }
   @Post('installments') async createInstallment(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.finance.createInstallment(b as never, await this.finance.getCurrentUser(h)); }
