@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.4
+
+- Added a non-persistent DPS response diagnostic for failed receipt lookups.
+- Receipt lookup errors now show the upstream HTTP status and sanitized response body.
+
+## 0.4.3
+
+- Trimmed the DPS API token before lookup.
+- Exposed the sanitized DPS error response for failed receipt lookups.
+
 ## 0.4.2
 
 - Simplified DPS receipt lookup to the required `id`, `type`, and token parameters.

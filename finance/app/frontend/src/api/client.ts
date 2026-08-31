@@ -2,7 +2,7 @@ import type { Account, AppSettings, Budget, BudgetProgress, Category, CreditSumm
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`./api/${path}`, { headers: { 'Content-Type': 'application/json', ...init?.headers }, ...init });
-  if (!response.ok) throw new Error((await response.json().catch(() => null))?.message || 'Не удалось выполнить запрос');
+  if (!response.ok) { const error = await response.json().catch(() => null) as { message?: string; details?: unknown } | null; const details = error?.details ? `\nДеталі: ${typeof error.details === 'string' ? error.details : JSON.stringify(error.details)}` : ''; throw new Error(`${error?.message || 'Не удалось выполнить запрос'}${details}`); }
   return response.status === 204 ? undefined as T : response.json() as Promise<T>;
 }
 

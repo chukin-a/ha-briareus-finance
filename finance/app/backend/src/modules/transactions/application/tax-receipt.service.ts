@@ -7,7 +7,7 @@ const currency = () => (process.env.CURRENCY || 'UAH').toUpperCase();
 export class TaxReceiptService {
   async lookup(input: Record<string, unknown>) {
     const id = typeof input.id === 'string' ? input.id.trim() : '';
-    const token = process.env.TAX_API_TOKEN;
+    const token = process.env.TAX_API_TOKEN?.trim();
     if (!id) throw new BadRequestException('Receipt id is required');
     if (!token) throw new BadRequestException('TAX_API_TOKEN is not configured');
 
@@ -16,8 +16,15 @@ export class TaxReceiptService {
     if (!response.ok) {
       const body = await response.text().catch(() => '');
       let message = '';
-      try { message = String((JSON.parse(body) as { resultText?: unknown }).resultText || ''); } catch { /* response was not JSON */ }
-      throw new BadRequestException(message || `ДПС не повернула фіскальний чек (HTTP ${response.status})`);
+      try {
+        const parsed = JSON.parse(body) as { resultText?: unknown; message?: unknown; error?: unknown };
+        message = String(parsed.resultText || parsed.message || parsed.error || '');
+      } catch { /* response was not JSON */ }
+      const diagnostic = (message || body.trim()).replace(/\s+/g, ' ').slice(0, 300);
+      throw new BadRequestException({
+        message: diagnostic || `ДПС не повернула фіскальний чек (HTTP ${response.status})`,
+        details: { upstream: 'DPS', status: response.status, response: body.trim().slice(0, 2000) || null },
+      });
     }
 
     const payload = await response.json() as Record<string, unknown>;
