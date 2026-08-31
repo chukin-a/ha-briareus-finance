@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, CalendarClock, CircleAlert, Target } from 'lucide-react';
-import type { Account, BudgetProgress, Category, InstallmentPlan, RecurringOccurrence, Transaction } from '../types/finance';
+import type { Account, BudgetProgress, Category, InstallmentPlan, RecurringOccurrence, RecurringRule, Transaction } from '../types/finance';
 import type { Page } from '../components/BottomNav';
 import { SummaryCard } from '../components/SummaryCard';
 import { TransactionList } from '../components/TransactionList';
@@ -35,8 +35,8 @@ function creditDeadline(account: Account) {
 }
 
 export function Dashboard({ accounts, transactions, categories, period, range, onPeriodChange, onRangeChange, onNavigate }: { accounts: Account[]; transactions: Transaction[]; categories: Category[]; period: PeriodPreset; range: CustomRange; onPeriodChange: (period: PeriodPreset) => void; onRangeChange: (range: CustomRange) => void; onNavigate:(page:Page)=>void }) {
-  const [budgets,setBudgets]=useState<BudgetProgress[]>([]),[occurrences,setOccurrences]=useState<RecurringOccurrence[]>([]),[plans,setPlans]=useState<InstallmentPlan[]>([]);
-  useEffect(()=>{void Promise.all([financeApi.getBudgets(),financeApi.getOccurrences(),financeApi.getInstallments()]).then(([b,o,p])=>{setBudgets(b);setOccurrences(o);setPlans(p)}).catch(()=>undefined)},[transactions]);
+  const [budgets,setBudgets]=useState<BudgetProgress[]>([]),[occurrences,setOccurrences]=useState<RecurringOccurrence[]>([]),[plans,setPlans]=useState<InstallmentPlan[]>([]),[rules,setRules]=useState<RecurringRule[]>([]);
+  useEffect(()=>{void Promise.all([financeApi.getBudgets(),financeApi.getOccurrences(),financeApi.getInstallments(),financeApi.getRecurring()]).then(([b,o,p,r])=>{setBudgets(b);setOccurrences(o);setPlans(p);setRules(r)}).catch(()=>undefined)},[transactions]);
   const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amountMinor, 0);
   const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amountMinor, 0);
   const cashBalance = accounts.filter(a=>a.currency==='UAH'&&a.type!=='credit_card').reduce((sum, account) => sum + account.balanceMinor, 0);
@@ -49,14 +49,7 @@ export function Dashboard({ accounts, transactions, categories, period, range, o
     return dueDate && amountMinor > 0 ? [{ id: account.id, dueDate, title: account.name, amountMinor, currency: account.currency }] : [];
   }).sort((left, right) => left.dueDate.localeCompare(right.dueDate));
   const upcomingPayments = [
-    ...occurrences.filter(item => item.status === 'pending').map(item => ({
-      id: `recurring:${item.id}`,
-      kind: 'recurring' as const,
-      dueDate: item.dueDate,
-      title: item.description || 'Регулярна операція',
-      amountMinor: item.amountMinor,
-      currency: 'UAH',
-    })),
+    ...occurrences.filter(item => item.status === 'pending').map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const rawTitle = item.description || rule?.description || 'Регулярна операція'; return { id: `recurring:${item.id}`, kind: 'recurring' as const, dueDate: item.dueDate, title: rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle, amountMinor: item.amountMinor ?? rule?.amountMinor ?? 0, currency: rule?.currency || 'UAH' }; }),
     ...plans.flatMap(plan => (plan.obligations || []).filter(item => item.status !== 'paid').map(item => ({
       id: `installment:${item.id}`,
       kind: 'installment' as const,
