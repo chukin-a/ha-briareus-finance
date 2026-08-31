@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.2
+
+- Simplified DPS receipt lookup to the required `id`, `type`, and token parameters.
+- Removed optional QR date, time, and fiscal-device filters from the lookup request.
+
+## 0.4.1
+
+- Fixed DPS receipt lookup by preserving the QR code time parameter.
+- Reconstructed the full DPS date-time filter for existing QR transactions.
+
 ## 0.4.0
 
 - Improved fiscal receipt lookup through the DPS public API.

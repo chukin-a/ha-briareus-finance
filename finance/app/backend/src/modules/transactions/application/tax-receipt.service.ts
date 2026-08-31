@@ -12,10 +12,6 @@ export class TaxReceiptService {
     if (!token) throw new BadRequestException('TAX_API_TOKEN is not configured');
 
     const params = new URLSearchParams({ id, type: '1', token });
-    // The DPS API accepts date only as `YYYY-MM-DD HH:mm:ss`. QR codes usually
-    // contain only `YYYY-MM-DD`, so omit that incomplete filter and use id/fn.
-    if (typeof input.date === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(input.date)) params.set('date', input.date);
-    if (typeof input.fn === 'string' && input.fn) params.set('fn', input.fn);
     const response = await fetch(`https://cabinet.tax.gov.ua/ws/api_public/rro/chkAll?${params}`);
     if (!response.ok) {
       const body = await response.text().catch(() => '');
@@ -40,7 +36,7 @@ export class TaxReceiptService {
       items: parsed.items,
       metadata: {
         source: 'tax_register',
-        qr: { id, date: input.date || null, fn: input.fn || null },
+        qr: { id, url: input.url || null },
         items: parsed.items,
       },
     };
