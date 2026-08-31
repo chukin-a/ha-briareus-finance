@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7
+
+- Improved fiscal QR scanning speed by optimizing camera resolution and scan intervals.
+
 ## 0.3.6
 
 - Added semi-offline fiscal QR processing: amount, date, and receipt ID are filled locally before background tax-register enrichment.

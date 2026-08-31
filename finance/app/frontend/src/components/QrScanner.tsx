@@ -24,10 +24,10 @@ export function QrScanner({ onScan, onError }: { onScan: (data: TaxQrData) => vo
   const lastText = useRef('');
   const [status, setStatus] = useState('Наведіть камеру на QR-код фіскального чека');
   useEffect(() => {
-    const reader = new BrowserQRCodeReader();
+    const reader = new BrowserQRCodeReader(undefined, { delayBetweenScanAttempts: 80, delayBetweenScanSuccess: 300 });
     let controls: IScannerControls | undefined;
     let stopped = false;
-    void reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, resizeMode: { ideal: 'none' } } as MediaTrackConstraints, audio: false }, video.current!, (result, error) => {
+    void reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280, max: 1920 }, height: { ideal: 720, max: 1080 }, resizeMode: { ideal: 'none' } } as MediaTrackConstraints, audio: false }, video.current!, (result, error) => {
       if (stopped || !result) {
         if (error && error.name !== 'NotFoundException') onError('Не вдалося прочитати QR-код');
         return;
