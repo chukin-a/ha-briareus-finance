@@ -1,11 +1,12 @@
-import { ArrowLeftRight, CircleMinus, CirclePlus, Pizza } from 'lucide-react';
+import { ArrowLeftRight } from 'lucide-react';
 import type { Account, Category, Transaction } from '../types/finance';
 import { money, shortDate } from '../lib/money';
+import { CategoryIcon } from './CategoryIcon';
 
-function IconFor({ transaction }: { transaction: Transaction }) {
+function IconFor({ transaction, categories }: { transaction: Transaction; categories: Category[] }) {
   if (transaction.type === 'transfer') return <ArrowLeftRight />;
-  if (transaction.type === 'income') return <CirclePlus />;
-  return transaction.description?.toLowerCase().includes('еда') ? <Pizza /> : <CircleMinus />;
+  const category = categories.find(item => item.id === transaction.categoryId);
+  return <CategoryIcon name={category?.icon} color={category?.color} />;
 }
 
 function titleFor(transaction: Transaction, categories: Category[]) {
@@ -30,7 +31,7 @@ export function TransactionList({ transactions, accounts, categories }: { transa
   if (!transactions.length) return <p className="empty">Операцій за період немає</p>;
   return <div className="transactions">{transactions.slice(0, 12).map((transaction, index) => <article className="transaction" key={transaction.id}>
     {index === 0 && <time>{shortDate(transaction.occurredAt)}</time>}
-    <div className={`transaction-icon ${transaction.type}`}><IconFor transaction={transaction} /></div>
+    <div className={`transaction-icon ${transaction.type}`}><IconFor transaction={transaction} categories={categories} /></div>
     <div className="transaction-copy"><strong>{titleFor(transaction, categories)}</strong><span>{accountLine(transaction, accounts)}</span></div>
     <b className={transaction.type === 'income' ? 'income' : transaction.type === 'transfer' ? 'neutral' : ''}>{amountPrefix(transaction.type)} {money(transaction.amountMinor, transaction.currency)}</b>
   </article>)}</div>;

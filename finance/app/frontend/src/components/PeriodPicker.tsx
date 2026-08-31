@@ -24,6 +24,7 @@ export function PeriodPicker({ value, range, onChange, onRangeChange }: {
     <label className="period-field">
       <CalendarRange aria-hidden="true" />
       <span>Період</span>
+      <span className="period-value">{labels[value]}</span>
       <select aria-label="Період" value={value} onChange={event => onChange(event.target.value as PeriodPreset)}>
         {Object.entries(labels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
       </select>
