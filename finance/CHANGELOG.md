@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Fixed local Home Assistant app image builds by using the multi-platform base image directly in the Dockerfile.
+
 ## 0.3.0
 
 - Added SSE heartbeat for stable long-lived Ingress connections.

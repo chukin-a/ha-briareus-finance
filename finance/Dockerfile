@@ -12,9 +12,7 @@ RUN npm install
 COPY app/backend/ ./
 RUN npm run build
 
-ARG BUILD_ARCH=amd64
-ARG BUILD_FROM=ghcr.io/home-assistant/${BUILD_ARCH}-base:3.22
-FROM ${BUILD_FROM}
+FROM ghcr.io/home-assistant/base:3.22
 RUN apk add --no-cache nodejs npm
 WORKDIR /app
 
