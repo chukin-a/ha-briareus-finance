@@ -14,7 +14,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ApiExceptionFilter());
   const openApi = new DocumentBuilder().setTitle('HA Briareus Finance API').setVersion('1.0').build();
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, openApi));
-  app.useStaticAssets(join(__dirname, '..', 'public'), { index: false });
+  app.useStaticAssets(join(__dirname, '..', 'public'), { index: 'index.html' });
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, '0.0.0.0');
