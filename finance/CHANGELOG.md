@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Added SSE heartbeat for stable long-lived Ingress connections.
+- Added realtime updates for budgets, recurring payments, installments, categories, accounts, projects, transfers, and imports.
+- Added ownership and administrator access checks for accounts, projects, budgets, and recurring rules.
+- Added compact mobile navigation and transaction actions.
+- Removed the deprecated `build.yaml` build configuration.
+
 ## 0.2.0
 
 - Added realtime updates for shared finance data through SSE.
