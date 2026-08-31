@@ -31,4 +31,4 @@ export interface PaymentsReport { period:{from:string;to:string}; items:PaymentI
 export interface ImportRow { id:string; rowNumber:number; occurredOn:string|null; amountMinor:number|null; type:string|null; description:string|null; status:'new'|'duplicate'|'invalid'|'imported'; error:string|null; }
 export interface ImportReport { id:string; accountId:string; format:'csv'|'ofx'; currency:string; status:'preview'|'imported'|'cancelled'; rows:ImportRow[]; }
 export interface AppSettings { currency?:string; timezone?:string; sensorsEnabled?:boolean; warningDays?:number; }
-export interface RuntimeConfig { currency:string; timezone:string; }
+export interface RuntimeConfig { currency:string; timezone:string; taxApiEnabled:boolean; }

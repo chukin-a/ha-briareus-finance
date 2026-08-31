@@ -6,6 +6,7 @@ const currency = () => (process.env.CURRENCY || 'UAH').toUpperCase();
 @Injectable()
 export class TaxReceiptService {
   async lookup(input: Record<string, unknown>) {
+    if (process.env.TAX_API_ENABLED !== 'true') throw new BadRequestException('Запити до ДПС вимкнені в налаштуваннях add-on');
     const id = typeof input.id === 'string' ? input.id.trim() : '';
     const token = process.env.TAX_API_TOKEN?.trim();
     if (!id) throw new BadRequestException('Receipt id is required');

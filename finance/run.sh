@@ -11,5 +11,6 @@ export WARNING_DAYS="$(bashio::config 'warning_days')"
 export UPLOAD_LIMIT_MB="$(bashio::config 'upload_limit_mb')"
 export OPENAI_API_KEY="$(bashio::config 'openai_api_key')"
 export TAX_API_TOKEN="$(bashio::config 'tax_api_token')"
+export TAX_API_ENABLED="$(bashio::config 'tax_api_enabled')"
 
 exec node /app/dist/main.js

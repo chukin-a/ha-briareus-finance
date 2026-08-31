@@ -14,5 +14,5 @@ export class AppController {
   readiness() { return { status: 'ready' }; }
 
   @Get('config')
-  config() { return { currency: process.env.CURRENCY ?? 'UAH', timezone: process.env.TZ ?? 'Europe/Kyiv' }; }
+  config() { return { currency: process.env.CURRENCY ?? 'UAH', timezone: process.env.TZ ?? 'Europe/Kyiv', taxApiEnabled: process.env.TAX_API_ENABLED === 'true' }; }
 }

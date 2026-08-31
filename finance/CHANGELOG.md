@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.5
+
+- Added the `tax_api_enabled` Home Assistant add-on option.
+- Disabled DPS requests and hid receipt refresh when the option is off.
+
 ## 0.4.4
 
 - Added a non-persistent DPS response diagnostic for failed receipt lookups.
