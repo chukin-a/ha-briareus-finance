@@ -15,16 +15,22 @@ import { Transactions } from './views/Transactions';
 import { Users } from './views/Users';
 
 export default function App() {
-  const [page,setPage]=useState<Page>('dashboard'),[accounts,setAccounts]=useState<Account[]>([]),[transactions,setTransactions]=useState<Transaction[]>([]),[categories,setCategories]=useState<Category[]>([]),[projects,setProjects]=useState<Project[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[period,setPeriod]=useState<PeriodPreset>('current_month'),[customRange,setCustomRange]=useState<CustomRange>({from:new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1)).toISOString().slice(0,10),to:new Date(Date.now()+86400000).toISOString().slice(0,10)});
+  const [page,setPage]=useState<Page>('dashboard'),[accounts,setAccounts]=useState<Account[]>([]),[transactions,setTransactions]=useState<Transaction[]>([]),[categories,setCategories]=useState<Category[]>([]),[projects,setProjects]=useState<Project[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[dataVersion,setDataVersion]=useState(0),[period,setPeriod]=useState<PeriodPreset>('current_month'),[customRange,setCustomRange]=useState<CustomRange>({from:new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1)).toISOString().slice(0,10),to:new Date(Date.now()+86400000).toISOString().slice(0,10)});
   const load=useCallback(async(showLoading=true)=>{if(showLoading)setLoading(true);try{const [a,t,c,p]=await Promise.all([financeApi.getAccounts(),financeApi.getTransactions(period,customRange),financeApi.getCategories(),financeApi.getProjects()]);setAccounts(a);setTransactions(t);setCategories(c);setProjects(p)}catch(cause){setError(cause instanceof Error?cause.message:'Не вдалося завантажити дані')}finally{if(showLoading)setLoading(false)}},[period,customRange]);
   useEffect(()=>{void load()},[load]);
   useEffect(()=>{
     const events = new EventSource('./api/events');
-    const refresh = () => void load(false);
+    const refresh = () => { setDataVersion(version => version + 1); void load(false); };
     events.addEventListener('transaction.created', refresh);
     events.addEventListener('transaction.updated', refresh);
     events.addEventListener('transaction.deleted', refresh);
     events.addEventListener('transfer.changed', refresh);
+    events.addEventListener('budget.changed', refresh);
+    events.addEventListener('recurring.changed', refresh);
+    events.addEventListener('installment.changed', refresh);
+    events.addEventListener('category.changed', refresh);
+    events.addEventListener('account.changed', refresh);
+    events.addEventListener('project.changed', refresh);
     return () => events.close();
   },[load]);
   async function deleteAccount(account:Account){if(!window.confirm(`Видалити рахунок «${account.name}»?`))return;try{await financeApi.deleteAccount(account.id);await load()}catch(cause){setError(cause instanceof Error?cause.message:'Не вдалося видалити рахунок')}}
@@ -35,7 +41,7 @@ export default function App() {
   else if(page==='payments') content=<Payments accounts={accounts} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
   else if(page==='accounts') content=<Accounts accounts={accounts} onDelete={deleteAccount} onCreated={()=>void load(false)}/>;
   else if(page==='transactions') content=<Transactions transactions={transactions} accounts={accounts} categories={categories} projects={projects} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
-  else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)}/>;
+  else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} refreshKey={dataVersion} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)}/>;
   else if(page==='categories') content=<Categories categories={categories} onBack={()=>setPage('settings')} onChanged={()=>void load(false)}/>;
   else if(page==='projects') content=<Projects projects={projects} onBack={()=>setPage('budgets')} onChanged={()=>void load(false)}/>;
   else if(page==='users') content=<Users onBack={()=>setPage('settings')}/>;

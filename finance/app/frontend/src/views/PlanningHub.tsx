@@ -16,10 +16,11 @@ const nextMonth = () => {
   return value.toISOString().slice(0, 10);
 };
 
-export function PlanningHub({ accounts, categories, projects, onChanged }: {
+export function PlanningHub({ accounts, categories, projects, refreshKey, onChanged }: {
   accounts: Account[];
   categories: Category[];
   projects: Project[];
+  refreshKey: number;
   onBack: () => void;
   onChanged: () => void;
 }) {
@@ -72,7 +73,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
       setError(cause instanceof Error ? cause.message : 'Помилка завантаження');
     }
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [refreshKey]);
 
   function switchTab(value: Tab) {
     setTab(value);

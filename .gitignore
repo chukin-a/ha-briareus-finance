@@ -7,5 +7,6 @@ dev/
 /finance/app/backend/dist
 /finance/app/frontend/node_modules
 /finance/app/frontend/dist
+/finance/app/**/tsconfig*.tsbuildinfo
 /finance/app/backend/data/finance.sqlite
 /finance/app/backend/scripts/seed-money-flow.mjs

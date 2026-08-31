@@ -10,14 +10,14 @@ class PlanningController {
   constructor(private finance: FinanceService, private extended: ExtendedFinanceService) {}
   @Get('budgets') listBudgets() { return this.extended.listBudgets(); }
   @Post('budgets') async createBudget(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.extended.createBudget(b, await this.finance.getCurrentUser(h)); }
-  @Patch('budgets/:id') updateBudget(@Param('id') id:string,@Body() b:Record<string,unknown>){return this.extended.updateBudget(id,b);}
-  @Delete('budgets/:id') deleteBudget(@Param('id') id:string){return this.extended.deleteBudget(id);}
+  @Patch('budgets/:id') async updateBudget(@Param('id') id:string,@Headers() h:HeadersMap,@Body() b:Record<string,unknown>){return this.extended.updateBudget(id,b,await this.finance.getCurrentUser(h));}
+  @Delete('budgets/:id') async deleteBudget(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.deleteBudget(id,await this.finance.getCurrentUser(h));}
   @Get('budgets/:id/progress') progress(@Param('id') id: string) { return this.extended.budgetProgress(id); }
   @Post('budgets/:id/rollover') rollover(@Param('id') id:string){return this.extended.rolloverBudget(id);}
   @Get('recurring') recurring() { return this.finance.listRecurring(); }
   @Post('recurring') async createRecurring(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.finance.createRecurring(b as never, await this.finance.getCurrentUser(h)); }
-  @Patch('recurring/:id') updateRecurring(@Param('id') id:string,@Body() b:Record<string,unknown>){return this.extended.updateRecurring(id,b);}
-  @Delete('recurring/:id') deleteRecurring(@Param('id') id:string){return this.extended.archiveRecurring(id);}
+  @Patch('recurring/:id') async updateRecurring(@Param('id') id:string,@Headers() h:HeadersMap,@Body() b:Record<string,unknown>){return this.extended.updateRecurring(id,b,await this.finance.getCurrentUser(h));}
+  @Delete('recurring/:id') async deleteRecurring(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.archiveRecurring(id,await this.finance.getCurrentUser(h));}
   @Get('recurring/occurrences') occurrences(){return this.extended.listOccurrences();}
   @Post('recurring/generate') generate(@Body('days') days?:number){return this.extended.generateOccurrences(days);}
   @Post('recurring/occurrences/:id/confirm') async confirmOccurrence(@Param('id') id:string,@Headers() h:HeadersMap,@Body('accountId') accountId?:string,@Body('amountMinor') amountMinor?:number){const owner=await this.finance.getCurrentUser(h);if(!accountId) return this.extended.confirmOccurrence(id,owner);if(amountMinor===undefined)return this.extended.confirmOccurrence(id,owner,accountId);return this.extended.confirmOccurrenceWithAmount(id,owner,accountId,amountMinor);}

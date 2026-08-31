@@ -1,5 +1,3 @@
-ARG BUILD_FROM
-
 FROM node:22-alpine AS frontend-build
 WORKDIR /src/frontend
 COPY app/frontend/package*.json ./
@@ -14,6 +12,8 @@ RUN npm install
 COPY app/backend/ ./
 RUN npm run build
 
+ARG BUILD_ARCH=amd64
+ARG BUILD_FROM=ghcr.io/home-assistant/${BUILD_ARCH}-base:3.22
 FROM ${BUILD_FROM}
 RUN apk add --no-cache nodejs npm
 WORKDIR /app

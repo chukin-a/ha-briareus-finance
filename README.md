@@ -29,6 +29,5 @@ Inside Ingress:
 
 1. Add SQLite schema/migrations.
 2. Add Accounts / Transactions / Categories / Budgets.
-3. Add Monobank connector.
-4. Add HA API service for sensors/events.
-5. Add authentication/Ingress awareness.
+3. Add HA API service for sensors/events.
+4. Add authentication/Ingress awareness.
