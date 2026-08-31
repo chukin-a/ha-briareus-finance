@@ -28,7 +28,7 @@ export function CategoryOptions({ categories, type }: { categories: Category[]; 
 
   return rows.map(({ category, depth }) => (
     <option key={category.id} value={category.id}>
-      {`${'\u00a0\u00a0'.repeat(depth)}${depth ? '↳ ' : ''}${category.name}`}
+      {`${'\u00a0\u00a0'.repeat(depth)}${category.name}`}
     </option>
   ));
 }

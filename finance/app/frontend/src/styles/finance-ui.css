@@ -1,5 +1,6 @@
 .transactions-toolbar { margin: 0 0 14px; }
 .account-actions { display: flex; gap: 4px; }
 .account-actions button { padding: 5px; }
+.transaction-edit { border: 0; color: #ffc35b; background: transparent; }
 .account small { color: #777; }
 .account > strong { grid-column: 1 / -1; }

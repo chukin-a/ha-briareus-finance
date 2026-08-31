@@ -1,6 +1,11 @@
 .categories-screen { padding-bottom: 96px; }
 .category-spacer { flex: 1; }
-.category-row, .category-child { display: flex; align-items: center; gap: 10px; }
+.category-row, .category-child { display: flex; align-items: center; gap: 8px; }
+
+/* Keep deep category trees compact enough for small screens. */
+.category-group { padding: 3px 0; }
+.category-row { gap: 10px; padding: 9px 4px; font-size: 18px; }
+.category-child { gap: 8px; padding-top: 7px; padding-bottom: 7px; font-size: 15px; }
 .category-delete { border: 0; background: transparent; color: #94a3b8; padding: 5px; cursor: pointer; display: inline-flex; }
 .category-delete:hover { color: #ef4444; }
 .category-add-child { border: 0; border-radius: 7px; padding: 4px; color: #aaa49b; background: #242424; display: inline-flex; cursor: pointer; }

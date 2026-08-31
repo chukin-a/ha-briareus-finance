@@ -27,6 +27,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [rules, setRules] = useState<RecurringRule[]>([]);
+  const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
   const [occurrences, setOccurrences] = useState<RecurringOccurrence[]>([]);
   const [plans, setPlans] = useState<InstallmentPlan[]>([]);
   const [receipts, setReceipts] = useState<ReceiptDraft[]>([]);
@@ -44,6 +45,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
   const [rollover, setRollover] = useState(false);
   const [warning, setWarning] = useState('80');
   const [operationType, setOperationType] = useState<'income' | 'expense'>('expense');
+  const [recurringCategoryId, setRecurringCategoryId] = useState('');
   const [importFormat, setImportFormat] = useState<'csv' | 'ofx'>('csv');
   const [receiptCategory, setReceiptCategory] = useState('');
   const [receiptProject, setReceiptProject] = useState('');
@@ -99,7 +101,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
           projectId: scope === 'project' ? scopeId : undefined,
         });
       } else if (tab === 'recurring') {
-        await financeApi.createRecurring({
+        const recurringBody = {
           accountId: accountId || undefined,
           type: operationType,
           amountMinor,
@@ -107,12 +109,15 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
           frequency: cadence,
           startDate: date,
           description: name,
-          categoryId: scope === 'category' ? scopeId : undefined,
-          projectId: scope === 'project' ? scopeId : undefined,
-        });
+          categoryId: recurringCategoryId || undefined,
+        };
+        if (editingRule) await financeApi.updateRecurring(editingRule.id, recurringBody);
+        else await financeApi.createRecurring(recurringBody);
       }
       setName('');
       setAmount('');
+      setEditingRule(null);
+      setRecurringCategoryId('');
       setDialogOpen(false);
       await load();
     } catch (cause) {
@@ -185,7 +190,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
 
   return <main className="screen">
     <header className="screen-header">
-      <div><span className="eyebrow">КОНТРОЛЬ ВИТРАТ</span><h1>Бюджети</h1></div>
+      <div><span className="eyebrow">КОНТРОЛЬ ВИТРАТ</span><h1>Планування</h1></div>
       <div className="round-action"><Target /></div>
     </header>
     {error && <div className="category-error">{error}</div>}
@@ -193,7 +198,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
       {(Object.keys(labels) as Tab[]).map(value => <button key={value} className={tab === value ? 'active' : ''} onClick={() => switchTab(value)}>{labels[value]}</button>)}
     </div>
     {tab !== 'installments' && <div className="panel-actions">
-      <button className="primary-action" onClick={() => { setError(''); if (tab === 'recurring') setAccountId(''); setDialogOpen(true); }}><Plus size={17} />{actionLabel}</button>
+      <button className="primary-action" onClick={() => { setError(''); if (tab === 'recurring') { setAccountId(''); setEditingRule(null); setRecurringCategoryId(''); } setDialogOpen(true); }}><Plus size={17} />{actionLabel}</button>
     </div>}
 
     {tab === 'installments' && <InstallmentsPanel accounts={accounts} plans={plans} reload={load} onChanged={onChanged} />}
@@ -211,7 +216,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
       </article>)}
     </div>}
     {tab === 'recurring' && <>
-      <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency} · {rule.accountId ? accounts.find(account => account.id === rule.accountId)?.name || 'Рахунок' : 'Обрати під час оплати'}</span><div><button className="danger-action" onClick={() => window.confirm(`Видалити регулярну операцію «${rule.description || 'без назви'}»?`) && void financeApi.deleteRecurring(rule.id).then(load)}>Видалити</button></div></article>)}</div>
+      <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency} · {rule.accountId ? accounts.find(account => account.id === rule.accountId)?.name || 'Рахунок' : 'Обрати під час оплати'}</span><div><button onClick={() => { setEditingRule(rule); setName(rule.description || ''); setAmount(String(rule.amountMinor / 100).replace('.', ',')); setOperationType(rule.type); setAccountId(rule.accountId || ''); setRecurringCategoryId(rule.categoryId || ''); setCadence(rule.frequency); setDate(rule.startDate); setError(''); setDialogOpen(true); }}>Редагувати</button><button className="danger-action" onClick={() => window.confirm(`Видалити регулярну операцію «${rule.description || 'без назви'}»?`) && void financeApi.deleteRecurring(rule.id).then(load)}>Видалити</button></div></article>)}</div>
       <button className="secondary-action" onClick={() => void financeApi.generateOccurrences().then(load)}>Оновити календар</button>
       <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><div><button onClick={() => { setPaymentOccurrence(item); setPaymentAccountId(rule?.accountId || accounts[0]?.id || ''); setPaymentAmount(String(amountMinor / 100).replace('.', ',')); }}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
     </>}
@@ -234,15 +239,16 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
     {dialogOpen && tab === 'projects' && <Dialog title="Новий проєкт" onClose={() => setDialogOpen(false)}>
       <div className="planning-form"><label>Назва<input autoFocus value={name} onChange={event => setName(event.target.value)} placeholder="Назва проєкту" /></label><label>Планова сума<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} placeholder="0,00" /></label><button className="primary" onClick={() => void createPlanningItem()}>Створити</button></div>
     </Dialog>}
-    {dialogOpen && tab === 'recurring' && <Dialog title="Регулярна операція" onClose={() => setDialogOpen(false)}>
+    {dialogOpen && tab === 'recurring' && <Dialog title={editingRule ? 'Редагування регулярної операції' : 'Регулярна операція'} onClose={() => { setEditingRule(null); setDialogOpen(false); }}>
       <div className="planning-form">
         <label>Опис<input value={name} onChange={event => setName(event.target.value)} /></label>
         <label>Сума<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /></label>
         <label>Тип<select value={operationType} onChange={event => setOperationType(event.target.value as typeof operationType)}><option value="income">Прибуток</option><option value="expense">Витрата</option></select></label>
         <label>Рахунок<select value={accountId} onChange={event => setAccountId(event.target.value)}><option value="">Обрати під час оплати</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
+        <label>Категорія<select value={recurringCategoryId} onChange={event => setRecurringCategoryId(event.target.value)}><option value="">Без категорії</option><CategoryOptions categories={categories} type={operationType} /></select></label>
         <label>Періодичність<select value={cadence} onChange={event => setCadence(event.target.value)}><option value="weekly">Щотижня</option><option value="monthly">Щомісяця</option><option value="quarterly">Щокварталу</option><option value="yearly">Щороку</option></select></label>
         <label>Початок<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
-        <button className="primary" onClick={() => void createPlanningItem()}>Створити правило</button>
+        <button className="primary" onClick={() => void createPlanningItem()}>{editingRule ? 'Зберегти зміни' : 'Створити правило'}</button>
       </div>
     </Dialog>}
     {paymentOccurrence && <Dialog title="Сплатити регулярну операцію" onClose={() => setPaymentOccurrence(null)}><div className="planning-form"><label>Сума<input inputMode="decimal" value={paymentAmount} onChange={event => setPaymentAmount(event.target.value)} /></label><label>Рахунок<select value={paymentAccountId} onChange={event => setPaymentAccountId(event.target.value)}><option value="">Оберіть рахунок</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label><button className="primary" disabled={!paymentAccountId||!Number.isInteger(parseMinor(paymentAmount))||parseMinor(paymentAmount)<=0} onClick={() => void financeApi.confirmOccurrence(paymentOccurrence.id, paymentAccountId, parseMinor(paymentAmount)).then(() => { setPaymentOccurrence(null); void load(); onChanged(); })}>Підтвердити платіж</button></div></Dialog>}
