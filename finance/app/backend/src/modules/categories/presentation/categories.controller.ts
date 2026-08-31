@@ -1,0 +1,4 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { FinanceService } from '../../finance/application/finance.service';
+@Controller('categories')
+export class CategoriesController { constructor(private readonly finance: FinanceService) {} @Get() list() { return this.finance.listCategories(); } @Post() create(@Body() body: { name: string; type: 'income' | 'expense'; icon?: string; color?: string; parentId?: string }) { return this.finance.createCategory(body); } @Patch(':id') update(@Param('id') id: string, @Body() body: { name: string; icon?: string; parentId?: string }) { return this.finance.updateCategory(id, body); } @Post(':id/archive') archive(@Param('id') id:string){return this.finance.archiveCategory(id);}@Delete(':id') remove(@Param('id') id: string) { return this.finance.deleteCategory(id); } }

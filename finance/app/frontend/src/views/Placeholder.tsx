@@ -1,0 +1,1 @@
+export function Placeholder({ title }: { title: string }) { return <main className="screen"><header className="screen-header"><div><span className="eyebrow">BRIAREUS FINANCE</span><h1>{title}</h1></div></header><p className="empty">Цей розділ готується.</p></main>; }

@@ -1,0 +1,26 @@
+.bottom-nav{grid-template-columns:repeat(7,1fr);width:min(calc(100% - 20px),760px)}
+.bottom-nav button{font-size:9px}
+.payments-screen .screen-header{margin-bottom:24px}
+.payment-total-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.payment-total-strip article{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:#171717}
+.payment-total-strip span{color:#9f998f;font-size:11px;font-weight:800}
+.payment-total-strip strong{font-size:17px;font-weight:500}
+.payment-tabs{margin:0 0 12px}
+.payments-list{display:grid;gap:8px}
+.payments-list article{display:grid;grid-template-columns:48px 38px 1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid #2d2a25;border-radius:12px;background:#171717}
+.payments-list article.installment{border-color:#403222}
+.payments-list article.credit_card{border-color:#4c2d2a}
+.payment-date{display:grid;place-items:center;padding:6px 0;border-radius:9px;background:#222}
+.payment-date strong{font-size:17px;font-weight:600}
+.payment-date span{color:#a8a096;font-size:11px}
+.payment-icon{display:grid;place-items:center;color:#ffc35b}
+.payment-icon svg{width:23px;height:23px}
+.payment-copy{display:grid;gap:3px;min-width:0}
+.payment-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:500}
+.payment-copy span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#aaa49b;font-size:12px}
+.payments-list b{white-space:nowrap;font-size:16px;font-weight:500}
+.payment-actions{display:flex;gap:6px}
+.payment-actions button{display:flex;align-items:center;gap:4px;border:1px solid #514737;border-radius:8px;padding:7px 9px;color:#ffd282;background:#252019;font-size:12px}
+.payment-actions button:disabled{opacity:.55}
+.payment-actions span{color:#aaa49b;font-size:12px}
+@media(max-width:720px){.payments-list article{grid-template-columns:44px 32px 1fr auto}.payment-actions{grid-column:3/-1;justify-self:end}.bottom-nav button span{display:none}.bottom-nav button{padding:10px 3px}.bottom-nav button svg{width:22px;height:22px}}

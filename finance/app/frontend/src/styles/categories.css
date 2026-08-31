@@ -1,0 +1,22 @@
+.categories-screen { padding-bottom: 96px; }
+.category-spacer { flex: 1; }
+.category-row, .category-child { display: flex; align-items: center; gap: 10px; }
+.category-delete { border: 0; background: transparent; color: #94a3b8; padding: 5px; cursor: pointer; display: inline-flex; }
+.category-delete:hover { color: #ef4444; }
+.category-add-child { border: 0; border-radius: 7px; padding: 4px; color: #aaa49b; background: #242424; display: inline-flex; cursor: pointer; }
+.category-add-child:hover { color: #ffc35b; background: #39332a; }
+.category-error { margin: 0 20px 12px; padding: 10px 12px; border-radius: 10px; background: #fef2f2; color: #b91c1c; font-size: 13px; }
+.empty-state { color: #94a3b8; text-align: center; padding: 48px 20px; }
+.category-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: grid; place-items: center; z-index: 20; padding: 20px; }
+.category-modal { width: min(100%, 420px); color: #f4f1ec; background: #191919; border: 1px solid #3d3428; border-radius: 18px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.55); }
+.category-modal h2 { margin: 0 0 18px; font-size: 20px; font-weight: 500; }
+.category-modal label { display: grid; gap: 7px; margin: 12px 0; color: #aaa49b; font-size: 13px; }
+.category-modal input, .category-modal select { width: 100%; border: 1px solid #3d3a35; border-radius: 10px; padding: 11px 12px; color: #f4f1ec; font: inherit; box-sizing: border-box; background: #101010; }
+.category-modal input::placeholder { color: #706c66; }
+.category-icon-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.category-icon-picker button { width: 40px; height: 40px; border: 1px solid #3d3a35; border-radius: 9px; color: #aaa49b; background: #101010; display: grid; place-items: center; cursor: pointer; }
+.category-icon-picker button:hover, .category-icon-picker button.selected { border-color: #ffc35b; color: #ffc35b; background: #39332a; }
+.category-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.category-modal-actions button { border: 1px solid #3d3a35; border-radius: 10px; padding: 10px 14px; cursor: pointer; color: #d8d3cc; background: #242424; }
+.category-modal-actions .primary { background: #2563eb; color: #fff; }
+.category-modal-actions .primary:disabled { opacity: .5; cursor: not-allowed; }

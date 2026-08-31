@@ -1,0 +1,14 @@
+.users-list{display:grid;gap:10px}
+.users-list article{display:grid;grid-template-columns:42px 1fr auto auto;gap:12px;align-items:center;padding:13px 14px;border:1px solid #302d28;border-radius:12px;background:#171717}
+.users-list article.blocked{border-color:#65372f;background:#1b1412}
+.user-icon{display:grid;place-items:center;color:#ffc35b}
+.user-icon svg{width:25px;height:25px}
+.user-copy{display:grid;gap:3px;min-width:0}
+.user-copy strong,.user-copy span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-copy strong{font-size:16px;font-weight:500}
+.user-copy span,.user-copy small{color:#aaa49b;font-size:12px}
+.users-list b{color:#aaa49b;font-size:12px;font-weight:500;white-space:nowrap}
+.users-list article:not(.blocked) b{color:#ffc35b}
+.users-list button{border:1px solid #514737;border-radius:8px;padding:8px 10px;color:#ffd282;background:#252019;font-size:12px;white-space:nowrap}
+.users-list button:disabled{opacity:.45}
+@media(max-width:620px){.users-list article{grid-template-columns:36px 1fr auto}.users-list button{grid-column:2/-1;justify-self:end}}

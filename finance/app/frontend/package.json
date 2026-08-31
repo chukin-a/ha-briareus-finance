@@ -1,0 +1,29 @@
+{
+  "name": "ha-finance-frontend",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build"
+  },
+  "dependencies": {
+    "@untitledui/icons": "latest",
+    "lucide-react": "^0.545.0",
+    "react": "^19.1.1",
+    "react-aria-components": "latest",
+    "react-dom": "^19.1.1",
+    "tailwind-merge": "latest",
+    "tailwindcss-animate": "latest",
+    "tailwindcss-react-aria-components": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "latest",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.1.1",
+    "tailwindcss": "latest",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}

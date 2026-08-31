@@ -1,0 +1,37 @@
+name: HA Briareus Finance
+version: "0.1.0"
+slug: ha_briareus_finance
+description: Personal finance and budget manager for Home Assistant
+url: https://github.com/chukin-a/ha-briareus-finance.git
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+
+ingress: true
+ingress_port: 3000
+panel_icon: mdi:cash-multiple
+panel_title: Finance
+
+homeassistant_api: true
+
+map:
+  - addon_config:rw
+
+options:
+  currency: UAH
+  timezone: Europe/Kyiv
+  sensors_enabled: false
+  sensor_refresh_interval: 300
+  warning_days: 5
+  upload_limit_mb: 10
+
+schema:
+  currency: str
+  timezone: str
+  sensors_enabled: bool
+  sensor_refresh_interval: int(30,3600)
+  warning_days: int(1,30)
+  upload_limit_mb: int(1,25)

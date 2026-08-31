@@ -1,0 +1,18 @@
+import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
+import { OutboxEventEntity } from '../../database/entities/outbox-event.entity';
+import { AccountEntity } from '../../database/entities/account.entity';
+import { TransactionEntity } from '../../database/entities/transaction.entity';
+import { resolvePeriod } from '../../shared/domain/period';
+
+@Injectable()
+export class HomeAssistantService implements OnApplicationBootstrap, OnModuleDestroy {
+  private readonly logger=new Logger(HomeAssistantService.name); private timers:NodeJS.Timeout[]=[];
+  constructor(@InjectRepository(OutboxEventEntity) private outbox:Repository<OutboxEventEntity>,@InjectRepository(AccountEntity) private accounts:Repository<AccountEntity>,@InjectRepository(TransactionEntity) private transactions:Repository<TransactionEntity>){}
+  onApplicationBootstrap(){if(process.env.HA_SENSORS_ENABLED!=='true')return;void this.syncSensors();void this.flush();this.timers=[setInterval(()=>void this.syncSensors(),Number(process.env.HA_REFRESH_INTERVAL||300)*1000),setInterval(()=>void this.flush(),30000)];}
+  onModuleDestroy(){this.timers.forEach(clearInterval);}
+  private async request(path:string,body:unknown){const token=process.env.SUPERVISOR_TOKEN;if(!token)return false;try{const response=await fetch(`http://supervisor/core/api/${path}`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!response.ok)this.logger.warn(`Home Assistant delivery failed with status ${response.status}`);return response.ok;}catch{this.logger.warn('Home Assistant API is unavailable');return false;}}
+  async flush(){const due=await this.outbox.find({where:{status:'pending',nextAttemptAt:LessThanOrEqual(new Date().toISOString())},take:20});for(const event of due){const ok=await this.request(`events/${event.type}`,JSON.parse(event.payload));event.attempts++;event.status=ok?'sent':event.attempts>=8?'failed':'pending';event.nextAttemptAt=new Date(Date.now()+Math.min(3600,2**event.attempts*15)*1000).toISOString();await this.outbox.save(event);}}
+  async syncSensors(){const accounts=await this.accounts.findBy({archived:false}),txs=await this.transactions.find(),period=resolvePeriod({preset:'current_month'}),month=txs.filter(t=>t.occurredOn>=period.from&&t.occurredOn<period.to);const delta=(id:string,t:TransactionEntity)=>t.accountId!==id?0:t.type==='income'||t.type==='transfer_in'?t.amountMinor:t.type==='expense'||t.type==='transfer_out'?-t.amountMinor:0;const balances=accounts.map(a=>({account:a,balance:a.initialBalanceMinor+txs.reduce((s,t)=>s+delta(a.id,t),0)}));for(const {account,balance} of balances)await this.request(`states/sensor.briareus_account_${account.id.replace(/-/g,'_')}`,{state:String(balance/100),attributes:{friendly_name:account.name,unit_of_measurement:account.currency,device_class:'monetary'}});for(const code of [...new Set(accounts.map(a=>a.currency))]){const total=balances.filter(x=>x.account.currency===code).reduce((s,x)=>s+x.balance,0);await this.request(`states/sensor.briareus_total_${code.toLowerCase()}`,{state:String(total/100),attributes:{unit_of_measurement:code,device_class:'monetary'}});for(const type of ['income','expense']){const value=month.filter(t=>t.type===type&&t.currency===code).reduce((s,t)=>s+t.amountMinor,0);await this.request(`states/sensor.briareus_${type}_${code.toLowerCase()}_current_month`,{state:String(value/100),attributes:{unit_of_measurement:code,period_start:period.from,period_end_exclusive:period.to}});}}}
+}

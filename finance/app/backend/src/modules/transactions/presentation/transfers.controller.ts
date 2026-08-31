@@ -1,0 +1,5 @@
+import { Body, Controller, Delete, Headers, Param, Post } from '@nestjs/common';
+import { IsInt, IsOptional, IsString, IsUUID, Matches, Min } from 'class-validator';
+import { FinanceService } from '../../finance/application/finance.service';
+class CreateTransferDto { @IsUUID() sourceAccountId!:string; @IsUUID() targetAccountId!:string; @IsInt() @Min(1) sourceAmountMinor!:number; @IsOptional() @IsInt() @Min(1) targetAmountMinor?:number; @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) occurredOn?:string; @IsOptional() @IsString() description?:string; }
+@Controller('transfers') export class TransfersController { constructor(private finance:FinanceService){} @Post() async create(@Headers() h:Record<string,string|string[]|undefined>,@Body() b:CreateTransferDto){return this.finance.createTransfer(b,await this.finance.getCurrentUser(h));}@Delete(':id') async remove(@Param('id') id:string,@Headers() h:Record<string,string|string[]|undefined>){return this.finance.deleteTransfer(id,await this.finance.getCurrentUser(h));} }
