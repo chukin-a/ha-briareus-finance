@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+- Improved fiscal receipt lookup through the DPS public API.
+- Fixed QR date handling when the code contains a date without time.
+- Added safe propagation of DPS API error messages.
+- Added receipt item extraction from namespaced and variant XML structures.
+- Added manual receipt data refresh from transaction details.
+- Moved receipt processing into the transactions module.
+- Removed legacy photo upload/OCR fallback and cleaned up stored receipt drafts and photos.
+
 ## 0.3.9
 
 - Fixed fiscal receipt item extraction for namespaced and extended DPS XML fields.
