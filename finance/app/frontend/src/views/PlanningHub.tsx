@@ -4,16 +4,11 @@ import { financeApi } from '../api/client';
 import { CategoryOptions } from '../components/CategoryOptions';
 import { Dialog } from '../components/Dialog';
 import { InstallmentsPanel } from '../components/InstallmentsPanel';
-import { money } from '../lib/money';
+import { money, parseMinor, shortDate } from '../lib/money';
 import type { Account, BudgetProgress, Category, InstallmentPlan, Project, ReceiptDraft, RecurringOccurrence, RecurringRule } from '../types/finance';
 
 type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports' | 'receipts';
-const toMinor = (value: string) => {
-  const [whole, fraction = ''] = value.replace(',', '.').split('.');
-  return /^\d+$/.test(whole) && /^\d{0,2}$/.test(fraction)
-    ? Number(whole) * 100 + Number((fraction + '00').slice(0, 2))
-    : Number.NaN;
-};
+const toMinor = parseMinor;
 const today = () => new Date().toISOString().slice(0, 10);
 const nextMonth = () => {
   const value = new Date();
@@ -214,9 +209,9 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
       </article>)}
     </div>}
     {tab === 'recurring' && <>
-      <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency}</span></article>)}</div>
-      <button onClick={() => void financeApi.generateOccurrences().then(load)}>Оновити календар</button>
-      <div className="planning-list">{occurrences.filter(item => item.status === 'pending').map(item => <article key={item.id}><strong>{item.description || item.dueDate}</strong><span>{item.dueDate}</span><div><button onClick={() => void financeApi.confirmOccurrence(item.id).then(() => { void load(); onChanged(); })}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>)}</div>
+      <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency}</span><div><button className="danger-action" onClick={() => window.confirm(`Видалити регулярну операцію «${rule.description || 'без назви'}»?`) && void financeApi.deleteRecurring(rule.id).then(load)}>Видалити</button></div></article>)}</div>
+      <button className="secondary-action" onClick={() => void financeApi.generateOccurrences().then(load)}>Оновити календар</button>
+      <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><div><button onClick={() => void financeApi.confirmOccurrence(item.id).then(() => { void load(); onChanged(); })}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
     </>}
     {tab === 'receipts' && <div className="planning-list">{receipts.map(receipt => <article key={receipt.id}><strong>{receipt.fileName}</strong><span>{receipt.status}</span></article>)}</div>}
 

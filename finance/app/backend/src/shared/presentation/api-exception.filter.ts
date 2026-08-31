@@ -1,14 +1,20 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(ApiExceptionFilter.name);
+
   catch(error: unknown, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<Response>();
     const request = host.switchToHttp().getRequest<Request>();
     const requestId = request.header('x-request-id') || randomUUID();
     const statusCode = error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      const technicalMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`${request.method} ${request.originalUrl} failed [${requestId}]: ${technicalMessage}`);
+    }
     const payload = error instanceof HttpException ? error.getResponse() : null;
     const objectPayload = typeof payload === 'object' && payload !== null ? payload as Record<string, unknown> : null;
     const rawMessage = objectPayload?.message ?? payload;
