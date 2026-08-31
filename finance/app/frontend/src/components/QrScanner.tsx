@@ -20,7 +20,7 @@ export function QrScanner({ onScan, onError }: { onScan: (data: TaxQrData) => vo
     const reader = new BrowserQRCodeReader();
     let controls: IScannerControls | undefined;
     let stopped = false;
-    void reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } }, audio: false }, video.current!, (result, error) => {
+    void reader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, resizeMode: { ideal: 'none' } } as MediaTrackConstraints, audio: false }, video.current!, (result, error) => {
       if (stopped || !result) {
         if (error && error.name !== 'NotFoundException') onError('Не вдалося прочитати QR-код');
         return;
@@ -30,8 +30,19 @@ export function QrScanner({ onScan, onError }: { onScan: (data: TaxQrData) => vo
       stopped = true;
       onScan(parsed);
       controls?.stop();
-    }).then(value => { controls = value; if (stopped) controls.stop(); }).catch(() => onError('Немає доступу до камери'));
+    }).then(value => {
+      controls = value;
+      const track = (video.current?.srcObject as MediaStream | null)?.getVideoTracks()[0];
+      if (track) {
+        const capabilities = track.getCapabilities() as MediaTrackCapabilities & { focusMode?: string[]; zoom?: { min: number; max: number } };
+        const advanced: Record<string, unknown>[] = [];
+        if (capabilities.focusMode?.includes('continuous')) advanced.push({ focusMode: 'continuous' });
+        if (capabilities.zoom) advanced.push({ zoom: Math.min(capabilities.zoom.max, Math.max(capabilities.zoom.min, 2)) });
+        if (advanced.length) void track.applyConstraints({ advanced } as MediaTrackConstraints).catch(() => undefined);
+      }
+      if (stopped) controls.stop();
+    }).catch(() => onError('Немає доступу до камери'));
     return () => { stopped = true; controls?.stop(); };
   }, [onError, onScan]);
-  return <div className="qr-scanner"><video ref={video} muted playsInline /><p>Наведіть камеру на QR-код фіскального чека</p></div>;
+  return <div className="qr-scanner"><video ref={video} muted playsInline /><div className="qr-scan-frame" aria-hidden="true"><i /><i /><i /><i /></div><p>Розмістіть QR-код у рамці</p><small>Пошук виконується по всьому кадру</small></div>;
 }

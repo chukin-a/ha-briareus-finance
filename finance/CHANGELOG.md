@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+
+- Added a visual QR scanning frame and guidance overlay in the camera scanner.
+
 ## 0.3.4
 
 - Added a transaction-toolbar action for local fiscal receipt QR scanning and lookup through the State Tax Service register.
