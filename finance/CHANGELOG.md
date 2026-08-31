@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- Added a secret Home Assistant add-on option for the State Tax Service fiscal receipt API token.
+
 ## 0.3.1
 
 - Fixed local Home Assistant app image builds by using the multi-platform base image directly in the Dockerfile.

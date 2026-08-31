@@ -18,4 +18,7 @@ export class TransactionEntity {
   @Column({ name: 'updated_at', type: 'varchar', nullable: true }) updatedAt!: string | null;
   @Column({ name: 'transfer_group_id', type: 'varchar', nullable: true }) transferGroupId!: string | null;
   @Column({ name: 'external_key', type: 'varchar', nullable: true, unique: true }) externalKey!: string | null;
+  @Column({ name: 'receipt_id', type: 'varchar', nullable: true }) receiptId!: string | null;
+  @Column({ name: 'metadata_json', type: 'text', nullable: true }) metadataJson!: string | null;
+  @Column({ name: 'tags_json', type: 'text', nullable: true }) tagsJson!: string | null;
 }

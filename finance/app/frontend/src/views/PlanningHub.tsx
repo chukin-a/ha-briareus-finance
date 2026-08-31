@@ -16,13 +16,14 @@ const nextMonth = () => {
   return value.toISOString().slice(0, 10);
 };
 
-export function PlanningHub({ accounts, categories, projects, refreshKey, onChanged }: {
+export function PlanningHub({ accounts, categories, projects, refreshKey, onChanged, onReceiptReady }: {
   accounts: Account[];
   categories: Category[];
   projects: Project[];
   refreshKey: number;
   onBack: () => void;
   onChanged: () => void;
+  onReceiptReady: (draft: { receiptId: string; amountMinor: number | null; currency: string; occurredOn: string | null; description: string | null; tags: string[]; metadata: Record<string, unknown> }) => void;
 }) {
   const [tab, setTab] = useState<Tab>('budgets');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -150,7 +151,10 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      setDraft(await financeApi.createReceipt({ fileName: file.name, mimeType: file.type, dataBase64 }));
+      const receipt = await financeApi.createReceipt({ fileName: file.name, mimeType: file.type, dataBase64 });
+      const extracted = await financeApi.ocrReceipt(receipt.id);
+      onReceiptReady(extracted);
+      setDialogOpen(false);
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Помилка завантаження');
@@ -268,7 +272,7 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
     </Dialog>}
     {dialogOpen && tab === 'receipts' && <Dialog title="Новий чек" onClose={() => setDialogOpen(false)}>
       <div className="planning-form">
-        <label>Фото чека<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => event.target.files?.[0] && void upload(event.target.files[0])} /></label>
+        <label>Фото чека<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={event => event.target.files?.[0] && void upload(event.target.files[0])} /></label>
         {draft && <>
           <label>Магазин / опис<input value={name} onChange={event => setName(event.target.value)} /></label>
           <label>Сума<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /></label>

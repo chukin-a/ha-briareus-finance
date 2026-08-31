@@ -1,5 +1,5 @@
 name: HA Briareus Finance
-version: "0.3.1"
+version: "0.3.2"
 slug: ha_briareus_finance
 description: Personal finance and budget manager for Home Assistant
 url: https://github.com/chukin-a/ha-briareus-finance.git
@@ -27,6 +27,8 @@ options:
   sensor_refresh_interval: 300
   warning_days: 5
   upload_limit_mb: 10
+  openai_api_key: ""
+  tax_api_token: ""
 
 schema:
   currency: str
@@ -35,3 +37,5 @@ schema:
   sensor_refresh_interval: int(30,3600)
   warning_days: int(1,30)
   upload_limit_mb: int(1,25)
+  openai_api_key: password
+  tax_api_token: password

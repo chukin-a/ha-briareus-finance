@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MoreHorizontal, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { financeApi } from '../api/client';
 import type { Account, Category, Project, Transaction, TransactionType } from '../types/finance';
@@ -14,7 +14,8 @@ function accountLine(transaction: Transaction, accounts: Account[]) {
   return `${source} → ${target}`;
 }
 
-export function Transactions({ transactions, accounts, categories, projects, period, range, onPeriodChange, onRangeChange, onChanged }: { transactions: Transaction[]; accounts: Account[]; categories: Category[]; projects: Project[]; period: PeriodPreset; range: CustomRange; onPeriodChange: (p: PeriodPreset) => void; onRangeChange: (range: CustomRange) => void; onChanged: () => void }) {
+export type ReceiptPrefill = { receiptId: string; amountMinor: number | null; currency: string; occurredOn: string | null; description: string | null; tags: string[]; metadata: Record<string, unknown> };
+export function Transactions({ transactions, accounts, categories, projects, period, range, onPeriodChange, onRangeChange, onChanged, initialReceipt, onInitialReceiptConsumed }: { transactions: Transaction[]; accounts: Account[]; categories: Category[]; projects: Project[]; period: PeriodPreset; range: CustomRange; onPeriodChange: (p: PeriodPreset) => void; onRangeChange: (range: CustomRange) => void; onChanged: () => void; initialReceipt?: ReceiptPrefill | null; onInitialReceiptConsumed: () => void }) {
   const [filter, setFilter] = useState<'all' | TransactionType>('all');
   const [open, setOpen] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -24,12 +25,16 @@ export function Transactions({ transactions, accounts, categories, projects, per
   const [relatedAccountId, setRelatedAccountId] = useState(accounts[1]?.id || '');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [tags, setTags] = useState('');
+  const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<Record<string, unknown>>({});
   const [categoryId, setCategoryId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState('');
   const visible = useMemo(() => filter === 'all' ? transactions : transactions.filter(t => t.type === filter), [filter, transactions]);
-  const reset = () => { setAmount(''); setDescription(''); setCategoryId(''); setProjectId(''); setError(''); setEditing(null); setOpen(false); setMenuId(null); };
+  const reset = () => { setAmount(''); setDescription(''); setCategoryId(''); setProjectId(''); setTags(''); setReceiptId(null); setMetadata({}); setError(''); setEditing(null); setOpen(false); setMenuId(null); };
+  useEffect(() => { if (!initialReceipt) return; setEditing(null); setType('expense'); setAmount(initialReceipt.amountMinor === null ? '' : String(initialReceipt.amountMinor / 100).replace('.', ',')); setDescription(initialReceipt.description || ''); setDate(initialReceipt.occurredOn || new Date().toISOString().slice(0, 10)); setCategoryId(''); setProjectId(''); setTags(initialReceipt.tags.join(', ')); setReceiptId(initialReceipt.receiptId); setMetadata(initialReceipt.metadata); setError(''); setOpen(true); onInitialReceiptConsumed(); }, [initialReceipt, onInitialReceiptConsumed]);
   const edit = (transaction: Transaction) => { setEditing(transaction); setType(transaction.type); setAccountId(transaction.accountId); setAmount(String(transaction.amountMinor / 100).replace('.', ',')); setDescription(transaction.description || ''); setCategoryId(transaction.categoryId || ''); setProjectId(transaction.projectId || ''); setDate(transaction.occurredAt.slice(0, 10)); setError(''); setOpen(true); };
   async function submit() {
     const amountMinor = parseMinor(amount);
@@ -38,7 +43,7 @@ export function Transactions({ transactions, accounts, categories, projects, per
     try {
       if (editing) await financeApi.updateTransaction(editing.id, { type, accountId, amountMinor, occurredOn: date, description: description.trim() || undefined, categoryId: categoryId || undefined, projectId: projectId || undefined });
       else if (type === 'transfer') await financeApi.createTransfer({ sourceAccountId: accountId, targetAccountId: relatedAccountId, sourceAmountMinor: amountMinor, targetAmountMinor: amountMinor, occurredOn: date, description: description.trim() || undefined });
-      else await financeApi.createTransaction({ type, accountId, amountMinor, occurredOn: date, description: description.trim() || undefined, categoryId: categoryId || undefined, projectId: projectId || undefined });
+      else { const created = await financeApi.createTransaction({ type, accountId, amountMinor, occurredOn: date, description: description.trim() || undefined, categoryId: categoryId || undefined, projectId: projectId || undefined, receiptId: receiptId || undefined, tags: tags.split(',').map(tag => tag.trim()).filter(Boolean), metadata }); if (receiptId) await financeApi.updateReceipt(receiptId, { transactionId: created.id, accountId, occurredOn: date, amountMinor, currency: created.currency, merchant: description.trim() || undefined }); }
       reset(); onChanged();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Не вдалося зберегти операцію'); }
   }

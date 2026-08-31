@@ -3,6 +3,7 @@ import { financeApi } from './api/client';
 import { BottomNav, type Page } from './components/BottomNav';
 import type { CustomRange, PeriodPreset } from './components/PeriodPicker';
 import type { Account, Category, Project, Transaction } from './types/finance';
+import type { ReceiptPrefill } from './views/Transactions';
 import { Accounts } from './views/Accounts';
 import { Analytics } from './views/Analytics';
 import { Categories } from './views/Categories';
@@ -15,7 +16,7 @@ import { Transactions } from './views/Transactions';
 import { Users } from './views/Users';
 
 export default function App() {
-  const [page,setPage]=useState<Page>('dashboard'),[accounts,setAccounts]=useState<Account[]>([]),[transactions,setTransactions]=useState<Transaction[]>([]),[categories,setCategories]=useState<Category[]>([]),[projects,setProjects]=useState<Project[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[dataVersion,setDataVersion]=useState(0),[period,setPeriod]=useState<PeriodPreset>('current_month'),[customRange,setCustomRange]=useState<CustomRange>({from:new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1)).toISOString().slice(0,10),to:new Date(Date.now()+86400000).toISOString().slice(0,10)});
+  const [page,setPage]=useState<Page>('dashboard'),[accounts,setAccounts]=useState<Account[]>([]),[transactions,setTransactions]=useState<Transaction[]>([]),[categories,setCategories]=useState<Category[]>([]),[projects,setProjects]=useState<Project[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[dataVersion,setDataVersion]=useState(0),[receiptPrefill,setReceiptPrefill]=useState<ReceiptPrefill|null>(null),[period,setPeriod]=useState<PeriodPreset>('current_month'),[customRange,setCustomRange]=useState<CustomRange>({from:new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1)).toISOString().slice(0,10),to:new Date(Date.now()+86400000).toISOString().slice(0,10)});
   const load=useCallback(async(showLoading=true)=>{if(showLoading)setLoading(true);try{const [a,t,c,p]=await Promise.all([financeApi.getAccounts(),financeApi.getTransactions(period,customRange),financeApi.getCategories(),financeApi.getProjects()]);setAccounts(a);setTransactions(t);setCategories(c);setProjects(p)}catch(cause){setError(cause instanceof Error?cause.message:'Не вдалося завантажити дані')}finally{if(showLoading)setLoading(false)}},[period,customRange]);
   useEffect(()=>{void load()},[load]);
   useEffect(()=>{
@@ -40,8 +41,8 @@ export default function App() {
   else if(page==='analytics') content=<Analytics categories={categories} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange}/>;
   else if(page==='payments') content=<Payments accounts={accounts} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
   else if(page==='accounts') content=<Accounts accounts={accounts} onDelete={deleteAccount} onCreated={()=>void load(false)}/>;
-  else if(page==='transactions') content=<Transactions transactions={transactions} accounts={accounts} categories={categories} projects={projects} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
-  else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} refreshKey={dataVersion} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)}/>;
+  else if(page==='transactions') content=<Transactions transactions={transactions} accounts={accounts} categories={categories} projects={projects} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)} initialReceipt={receiptPrefill} onInitialReceiptConsumed={()=>setReceiptPrefill(null)}/>;
+  else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} refreshKey={dataVersion} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)} onReceiptReady={draft=>{setReceiptPrefill(draft);setPage('transactions')}}/>;
   else if(page==='categories') content=<Categories categories={categories} onBack={()=>setPage('settings')} onChanged={()=>void load(false)}/>;
   else if(page==='projects') content=<Projects projects={projects} onBack={()=>setPage('budgets')} onChanged={()=>void load(false)}/>;
   else if(page==='users') content=<Users onBack={()=>setPage('settings')}/>;
