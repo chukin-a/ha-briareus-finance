@@ -25,13 +25,14 @@ import { SchemaRepair1710000004000 } from './migrations/1710000004000-SchemaRepa
 import { InstallmentInterest1710000005000 } from './migrations/1710000005000-InstallmentInterest';
 import { TransactionSchemaRepair1710000006000 } from './migrations/1710000006000-TransactionSchemaRepair';
 import { UserAccessControl1710000007000 } from './migrations/1710000007000-UserAccessControl';
+import { RecurringAccountOptional1710000008000 } from './migrations/1710000008000-RecurringAccountOptional';
 
 export function createDataSourceOptions(): DataSourceOptions {
   return {
     type: 'better-sqlite3',
     database: process.env.DB_PATH ?? './data/finance.sqlite',
     entities: [AccountEntity, CategoryEntity, TransactionEntity, UserEntity, ProjectEntity, BudgetEntity, BudgetPeriodEntity, RecurringRuleEntity, RecurringOccurrenceEntity, InstallmentPlanEntity, InstallmentObligationEntity, CreditCardTermEntity, ImportBatchEntity, ImportRowEntity, ReceiptEntity, ApplicationSettingEntity, OutboxEventEntity],
-    migrations: [InitialFinanceSchema1710000000000, PlanningAndAutomation1710000001000, FinancialPeriods1710000002000, CompleteFinanceSchema1710000003000, SchemaRepair1710000004000, InstallmentInterest1710000005000, TransactionSchemaRepair1710000006000, UserAccessControl1710000007000],
+    migrations: [InitialFinanceSchema1710000000000, PlanningAndAutomation1710000001000, FinancialPeriods1710000002000, CompleteFinanceSchema1710000003000, SchemaRepair1710000004000, InstallmentInterest1710000005000, TransactionSchemaRepair1710000006000, UserAccessControl1710000007000, RecurringAccountOptional1710000008000],
     migrationsRun: true,
     synchronize: false,
   };

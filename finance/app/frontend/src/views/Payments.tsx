@@ -3,7 +3,8 @@ import { CalendarClock, Check, CircleAlert, CreditCard, RefreshCw, X } from 'luc
 import { financeApi } from '../api/client';
 import { PeriodPicker, type CustomRange, type PeriodPreset } from '../components/PeriodPicker';
 import { money } from '../lib/money';
-import type { PaymentItem, PaymentsReport } from '../types/finance';
+import type { Account, PaymentItem, PaymentsReport } from '../types/finance';
+import { Dialog } from '../components/Dialog';
 
 type PaymentFilter = 'all' | PaymentItem['kind'];
 
@@ -26,8 +27,8 @@ function kindLabel(kind: PaymentItem['kind']) {
   return 'Запланований платіж';
 }
 
-export function Payments({ period, range, onPeriodChange, onRangeChange, onChanged }: { period: PeriodPreset; range: CustomRange; onPeriodChange:(period:PeriodPreset)=>void; onRangeChange:(range:CustomRange)=>void; onChanged:()=>void }) {
-  const [report,setReport]=useState<PaymentsReport|null>(null),[filter,setFilter]=useState<PaymentFilter>('all'),[error,setError]=useState(''),[busy,setBusy]=useState('');
+export function Payments({ accounts, period, range, onPeriodChange, onRangeChange, onChanged }: { accounts:Account[]; period: PeriodPreset; range: CustomRange; onPeriodChange:(period:PeriodPreset)=>void; onRangeChange:(range:CustomRange)=>void; onChanged:()=>void }) {
+  const [report,setReport]=useState<PaymentsReport|null>(null),[filter,setFilter]=useState<PaymentFilter>('all'),[error,setError]=useState(''),[busy,setBusy]=useState(''),[confirming,setConfirming]=useState<PaymentItem|null>(null),[accountId,setAccountId]=useState('');
   async function load() {
     try {
       setError('');
@@ -65,12 +66,13 @@ export function Payments({ period, range, onPeriodChange, onRangeChange, onChang
         <div className="payment-copy"><strong>{payment.title}</strong><span>{kindLabel(payment.kind)} · {payment.accountName}</span></div>
         <b>{money(payment.amountMinor,payment.currency)}</b>
         <div className="payment-actions">
-          {payment.action==='confirm_or_skip'&&<button disabled={busy===payment.id} onClick={()=>void run(payment.id, async()=>financeApi.confirmOccurrence(payment.sourceId))}><Check size={15}/>Підтвердити</button>}
+          {payment.action==='confirm_or_skip'&&<button disabled={busy===payment.id} onClick={()=>{setConfirming(payment);setAccountId(payment.accountId || accounts[0]?.id || '');}}><Check size={15}/>Підтвердити</button>}
           {payment.action==='confirm_or_skip'&&<button disabled={busy===payment.id} onClick={()=>void run(payment.id, async()=>financeApi.skipOccurrence(payment.sourceId))}><X size={15}/>Пропустити</button>}
           {payment.action==='pay'&&<button disabled={busy===payment.id} onClick={()=>void run(payment.id, async()=>financeApi.payObligation(payment.sourceId))}><Check size={15}/>Оплатити</button>}
           {payment.action==='manual'&&<span>Оплатити вручну</span>}
         </div>
       </article>)}
     </div>
+    {confirming&&<Dialog title="Сплатити регулярну операцію" onClose={()=>setConfirming(null)}><label>Рахунок<select value={accountId} onChange={event=>setAccountId(event.target.value)}><option value="">Оберіть рахунок</option>{accounts.map(account=><option key={account.id} value={account.id}>{account.name}</option>)}</select></label><button className="primary" disabled={!accountId||busy===confirming.id} onClick={()=>void run(confirming.id,async()=>{await financeApi.confirmOccurrence(confirming.sourceId,accountId);setConfirming(null);})}>Підтвердити платіж</button></Dialog>}
   </main>;
 }

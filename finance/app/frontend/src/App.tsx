@@ -23,7 +23,7 @@ export default function App() {
   if(loading) content=<main className="screen loading">Завантаження бюджету…</main>;
   else if(page==='dashboard') content=<Dashboard accounts={accounts} transactions={transactions} categories={categories} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onNavigate={setPage}/>;
   else if(page==='analytics') content=<Analytics categories={categories} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange}/>;
-  else if(page==='payments') content=<Payments period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
+  else if(page==='payments') content=<Payments accounts={accounts} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
   else if(page==='accounts') content=<Accounts accounts={accounts} onDelete={deleteAccount} onCreated={()=>void load(false)}/>;
   else if(page==='transactions') content=<Transactions transactions={transactions} accounts={accounts} categories={categories} projects={projects} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
   else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)}/>;

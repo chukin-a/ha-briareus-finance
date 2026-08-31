@@ -47,6 +47,8 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
   const [importFormat, setImportFormat] = useState<'csv' | 'ofx'>('csv');
   const [receiptCategory, setReceiptCategory] = useState('');
   const [receiptProject, setReceiptProject] = useState('');
+  const [paymentOccurrence, setPaymentOccurrence] = useState<RecurringOccurrence | null>(null);
+  const [paymentAccountId, setPaymentAccountId] = useState('');
 
   async function load() {
     try {
@@ -79,7 +81,6 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
       if (!name.trim() || !Number.isInteger(amountMinor) || amountMinor <= 0) {
         throw new Error('Вкажіть назву та коректну суму');
       }
-      if (tab === 'recurring' && !accountId) throw new Error('Спочатку додайте рахунок');
       if (tab === 'projects') {
         await financeApi.createProject({ name: name.trim(), plannedAmountMinor: amountMinor, currency: 'UAH' });
         onChanged();
@@ -98,7 +99,6 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
         });
       } else if (tab === 'recurring') {
         await financeApi.createRecurring({
-          accountId,
           type: operationType,
           amountMinor,
           currency: 'UAH',
@@ -211,7 +211,7 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
     {tab === 'recurring' && <>
       <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency}</span><div><button className="danger-action" onClick={() => window.confirm(`Видалити регулярну операцію «${rule.description || 'без назви'}»?`) && void financeApi.deleteRecurring(rule.id).then(load)}>Видалити</button></div></article>)}</div>
       <button className="secondary-action" onClick={() => void financeApi.generateOccurrences().then(load)}>Оновити календар</button>
-      <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><div><button onClick={() => void financeApi.confirmOccurrence(item.id).then(() => { void load(); onChanged(); })}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
+      <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><div><button onClick={() => { setPaymentOccurrence(item); setPaymentAccountId(rule?.accountId || accounts[0]?.id || ''); }}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
     </>}
     {tab === 'receipts' && <div className="planning-list">{receipts.map(receipt => <article key={receipt.id}><strong>{receipt.fileName}</strong><span>{receipt.status}</span></article>)}</div>}
 
@@ -237,12 +237,12 @@ export function PlanningHub({ accounts, categories, projects, onChanged }: {
         <label>Опис<input value={name} onChange={event => setName(event.target.value)} /></label>
         <label>Сума<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /></label>
         <label>Тип<select value={operationType} onChange={event => setOperationType(event.target.value as typeof operationType)}><option value="income">Прибуток</option><option value="expense">Витрата</option></select></label>
-        <label>Рахунок<select value={accountId} onChange={event => setAccountId(event.target.value)}><option value="">Оберіть рахунок</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
         <label>Періодичність<select value={cadence} onChange={event => setCadence(event.target.value)}><option value="weekly">Щотижня</option><option value="monthly">Щомісяця</option><option value="quarterly">Щокварталу</option><option value="yearly">Щороку</option></select></label>
         <label>Початок<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
-        <button className="primary" disabled={!accountId} onClick={() => void createPlanningItem()}>Створити правило</button>
+        <button className="primary" onClick={() => void createPlanningItem()}>Створити правило</button>
       </div>
     </Dialog>}
+    {paymentOccurrence && <Dialog title="Сплатити регулярну операцію" onClose={() => setPaymentOccurrence(null)}><div className="planning-form"><label>Рахунок<select value={paymentAccountId} onChange={event => setPaymentAccountId(event.target.value)}><option value="">Оберіть рахунок</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label><button className="primary" disabled={!paymentAccountId} onClick={() => void financeApi.confirmOccurrence(paymentOccurrence.id, paymentAccountId).then(() => { setPaymentOccurrence(null); void load(); onChanged(); })}>Підтвердити платіж</button></div></Dialog>}
     {dialogOpen && tab === 'imports' && <Dialog title="Імпорт виписки" onClose={() => setDialogOpen(false)}>
       <div className="planning-form">
         <label>Формат<select value={importFormat} onChange={event => setImportFormat(event.target.value as typeof importFormat)}><option value="csv">CSV</option><option value="ofx">OFX</option></select></label>

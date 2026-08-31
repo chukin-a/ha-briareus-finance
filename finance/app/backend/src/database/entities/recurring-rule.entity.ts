@@ -4,7 +4,7 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 export class RecurringRuleEntity {
   @PrimaryColumn() id!: string;
   @Column({ name: 'owner_id', type: 'varchar' }) ownerId!: string;
-  @Column({ name: 'account_id', type: 'varchar' }) accountId!: string;
+  @Column({ name: 'account_id', type: 'varchar', nullable: true }) accountId!: string;
   @Column({ type: 'varchar' }) type!: string;
   @Column({ name: 'amount_minor', type: 'integer' }) amountMinor!: number;
   @Column({ type: 'varchar' }) currency!: string;
