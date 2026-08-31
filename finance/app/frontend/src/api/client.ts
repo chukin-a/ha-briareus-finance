@@ -1,4 +1,4 @@
-import type { Account, AppSettings, Budget, BudgetProgress, Category, CreditSummary, CreditTerms, ImportReport, InstallmentPlan, PaymentsReport, Project, ReceiptDraft, RecurringOccurrence, RecurringRule, RuntimeConfig, Transaction, User } from '../types/finance';
+import type { Account, AppSettings, Budget, BudgetProgress, Category, CreditSummary, CreditTerms, ImportReport, InstallmentPlan, PaymentsReport, Project, RecurringOccurrence, RecurringRule, RuntimeConfig, Transaction, User } from '../types/finance';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`./api/${path}`, { headers: { 'Content-Type': 'application/json', ...init?.headers }, ...init });
@@ -57,14 +57,7 @@ export const financeApi = {
   getImport: (id:string) => request<ImportReport>(`imports/${id}`),
   confirmImport: (id:string) => request<ImportReport>(`imports/${id}/confirm`,{method:'POST'}),
   cancelImport: (id:string) => request<ImportReport>(`imports/${id}/cancel`,{method:'POST'}),
-  getReceipts: () => request<ReceiptDraft[]>('receipts'),
-  createReceipt: (body:Record<string,unknown>) => request<ReceiptDraft>('receipts',{method:'POST',body:JSON.stringify(body)}),
-  ocrReceipt: (id:string) => request<{receiptId:string;merchant:string|null;occurredOn:string|null;amountMinor:number|null;currency:string;description:string|null;categoryId:null;projectId:null;tags:string[];metadata:Record<string,unknown>}>(`receipts/${id}/ocr`,{method:'POST'}),
-  lookupTaxReceipt: (body:Record<string,unknown>) => request<{id:string;merchant:string|null;occurredOn:string|null;amountMinor:number|null;currency:string;description:string|null;tags:string[];metadata:Record<string,unknown>}>('receipts/tax-lookup',{method:'POST',body:JSON.stringify(body)}),
-  updateReceipt: (id:string,body:Record<string,unknown>) => request<ReceiptDraft>(`receipts/${id}`,{method:'PATCH',body:JSON.stringify(body)}),
-  confirmReceipt: (id:string) => request<ReceiptDraft>(`receipts/${id}/confirm`,{method:'POST'}),
-  cancelReceipt: (id:string) => request<ReceiptDraft>(`receipts/${id}/cancel`,{method:'POST'}),
-  deleteReceipt: (id:string) => request<void>(`receipts/${id}`,{method:'DELETE'}),
+  lookupTaxReceipt: (body:Record<string,unknown>) => request<{id:string;merchant:string|null;occurredOn:string|null;amountMinor:number|null;currency:string;description:string|null;tags:string[];items:Array<{name:string;quantity:number|null;priceMinor:number|null;amountMinor:number|null;vatMinor:number|null}>;metadata:Record<string,unknown>}>('transactions/receipts/tax-lookup',{method:'POST',body:JSON.stringify(body)}),
   getRuntimeConfig: () => request<RuntimeConfig>('config'),
   getSettings: () => request<AppSettings>('settings'),
   saveSettings: (body:AppSettings) => request<AppSettings>('settings',{method:'PUT',body:JSON.stringify(body)}),

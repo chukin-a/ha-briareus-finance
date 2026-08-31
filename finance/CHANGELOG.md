@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.8
+
+- Moved fiscal receipt lookup and parsing into the transactions module.
+- Removed legacy photo upload/OCR fallback and receipt screens from planning.
+- Added a migration that removes obsolete receipt drafts and stored receipt photos.
+- Fiscal receipt data is now kept as transaction metadata and receipt item positions.
+
 ## 0.3.7
 
 - Improved fiscal QR scanning speed by optimizing camera resolution and scan intervals.

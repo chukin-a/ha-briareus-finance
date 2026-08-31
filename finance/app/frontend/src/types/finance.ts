@@ -10,7 +10,7 @@ export interface Account {
 
 export interface Transaction {
   id: string; accountId: string; relatedAccountId: string | null; type: TransactionType;
-  amountMinor: number; currency: string; description: string | null; occurredAt: string; categoryId: string | null; projectId?: string | null; receiptId?: string | null; tags?: string[]; metadata?: Record<string, unknown>;
+  amountMinor: number; currency: string; description: string | null; occurredAt: string; categoryId: string | null; projectId?: string | null; receiptId?: string | null; tags?: string[]; metadata?: Record<string, unknown>; metadataJson?: string | null; tagsJson?: string | null;
 }
 
 export interface Category { id: string; name: string; type: 'income' | 'expense'; parentId: string | null; icon: string; color: string; sortOrder: number; archived?: boolean; }

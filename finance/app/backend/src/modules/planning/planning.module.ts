@@ -35,14 +35,6 @@ class PlanningController {
   @Get('imports/:id') importReport(@Param('id') id:string){return this.extended.importReport(id);}
   @Post('imports/:id/confirm') async confirmImport(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.confirmImport(id,await this.finance.getCurrentUser(h));}
   @Post('imports/:id/cancel') cancelImport(@Param('id') id:string){return this.extended.cancelImport(id);}
-  @Get('receipts') receipts(){return this.extended.listReceipts();}
-  @Post('receipts') async createReceipt(@Headers() h:HeadersMap,@Body() b:Record<string,unknown>){return this.extended.createReceipt(b,await this.finance.getCurrentUser(h));}
-  @Post('receipts/tax-lookup') async taxLookup(@Body() b:Record<string,unknown>){return this.extended.lookupTaxReceipt(b);}
-  @Post('receipts/:id/ocr') async ocrReceipt(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.ocrReceipt(id,await this.finance.getCurrentUser(h));}
-  @Patch('receipts/:id') updateReceipt(@Param('id') id:string,@Body() b:Record<string,unknown>){return this.extended.updateReceipt(id,b);}
-  @Post('receipts/:id/confirm') async confirmReceipt(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.confirmReceipt(id,await this.finance.getCurrentUser(h));}
-  @Post('receipts/:id/cancel') cancelReceipt(@Param('id') id:string){return this.extended.cancelReceipt(id);}
-  @Delete('receipts/:id') deleteReceipt(@Param('id') id:string){return this.extended.deleteReceipt(id);}
   @Get('settings') settings(){return this.extended.getSettings();}
   @Put('settings') saveSettings(@Body() b:Record<string,unknown>){return this.extended.saveSettings(b);}
   @Get('export') exportJson(){return this.extended.exportJson();}

@@ -4,11 +4,10 @@ import { financeApi } from '../api/client';
 import { CategoryOptions } from '../components/CategoryOptions';
 import { Dialog } from '../components/Dialog';
 import { InstallmentsPanel } from '../components/InstallmentsPanel';
-import { QrScanner, type TaxQrData } from '../components/QrScanner';
 import { money, parseMinor, shortDate } from '../lib/money';
-import type { Account, BudgetProgress, Category, InstallmentPlan, Project, ReceiptDraft, RecurringOccurrence, RecurringRule } from '../types/finance';
+import type { Account, BudgetProgress, Category, InstallmentPlan, Project, RecurringOccurrence, RecurringRule } from '../types/finance';
 
-type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports' | 'receipts';
+type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports';
 const toMinor = parseMinor;
 const today = () => new Date().toISOString().slice(0, 10);
 const nextMonth = () => {
@@ -17,14 +16,13 @@ const nextMonth = () => {
   return value.toISOString().slice(0, 10);
 };
 
-export function PlanningHub({ accounts, categories, projects, refreshKey, onChanged, onReceiptReady }: {
+export function PlanningHub({ accounts, categories, projects, refreshKey, onChanged }: {
   accounts: Account[];
   categories: Category[];
   projects: Project[];
   refreshKey: number;
   onBack: () => void;
   onChanged: () => void;
-  onReceiptReady: (draft: { receiptId?: string; amountMinor: number | null; currency: string; occurredOn: string | null; description: string | null; tags: string[]; metadata: Record<string, unknown> }) => void;
 }) {
   const [tab, setTab] = useState<Tab>('budgets');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,7 +32,6 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
   const [editingBudget, setEditingBudget] = useState<BudgetProgress | null>(null);
   const [occurrences, setOccurrences] = useState<RecurringOccurrence[]>([]);
   const [plans, setPlans] = useState<InstallmentPlan[]>([]);
-  const [receipts, setReceipts] = useState<ReceiptDraft[]>([]);
   const [error, setError] = useState('');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -42,7 +39,6 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
   const [date, setDate] = useState(today());
   const [endDate, setEndDate] = useState(nextMonth());
   const [content, setContent] = useState('');
-  const [draft, setDraft] = useState<ReceiptDraft | null>(null);
   const [scope, setScope] = useState<'all' | 'category' | 'project'>('all');
   const [scopeId, setScopeId] = useState('');
   const [cadence, setCadence] = useState('monthly');
@@ -51,12 +47,9 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
   const [operationType, setOperationType] = useState<'income' | 'expense'>('expense');
   const [recurringCategoryId, setRecurringCategoryId] = useState('');
   const [importFormat, setImportFormat] = useState<'csv' | 'ofx'>('csv');
-  const [receiptCategory, setReceiptCategory] = useState('');
-  const [receiptProject, setReceiptProject] = useState('');
   const [paymentOccurrence, setPaymentOccurrence] = useState<RecurringOccurrence | null>(null);
   const [paymentAccountId, setPaymentAccountId] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [scannerOpen, setScannerOpen] = useState(false);
 
   async function load() {
     try {
@@ -65,13 +58,11 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
         financeApi.getRecurring(),
         financeApi.getOccurrences(),
         financeApi.getInstallments(),
-        financeApi.getReceipts(),
       ]);
       setBudgets(data[0]);
       setRules(data[1]);
       setOccurrences(data[2]);
       setPlans(data[3]);
-      setReceipts(data[4]);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Помилка завантаження');
     }
@@ -145,69 +136,14 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
       setError(cause instanceof Error ? cause.message : 'Помилка імпорту');
     }
   }
-  async function upload(file: File) {
-    try {
-      const dataBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const receipt = await financeApi.createReceipt({ fileName: file.name, mimeType: file.type, dataBase64 });
-      const extracted = await financeApi.ocrReceipt(receipt.id);
-      onReceiptReady(extracted);
-      setDialogOpen(false);
-      await load();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Помилка завантаження');
-    }
-  }
-  async function scanTaxQr(data: TaxQrData) {
-    try {
-      const extracted = await financeApi.lookupTaxReceipt(data);
-      onReceiptReady({ ...extracted, metadata: { ...extracted.metadata, url: data.url } });
-      setScannerOpen(false);
-      setDialogOpen(false);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Не вдалося отримати чек з ДПС');
-    }
-  }
-  async function confirmDraft() {
-    if (!draft) return;
-    try {
-      const amountMinor = toMinor(amount);
-      if (!Number.isInteger(amountMinor) || amountMinor <= 0 || !accountId) throw new Error('Вкажіть рахунок та коректну суму');
-      await financeApi.updateReceipt(draft.id, {
-        merchant: name,
-        description: name,
-        occurredOn: date,
-        amountMinor,
-        currency: 'UAH',
-        accountId,
-        categoryId: receiptCategory || undefined,
-        projectId: receiptProject || undefined,
-      });
-      await financeApi.confirmReceipt(draft.id);
-      setDraft(null);
-      setName('');
-      setAmount('');
-      setDialogOpen(false);
-      await load();
-      onChanged();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Чек не підтверджено');
-    }
-  }
-
   const labels: Record<Tab, string> = {
     budgets: 'Бюджети',
     projects: 'Проєкти',
     recurring: 'Регулярні',
     installments: 'Розстрочки',
     imports: 'Імпорт',
-    receipts: 'Чеки',
   };
-  const actionLabel = tab === 'budgets' ? 'Новий бюджет' : tab === 'projects' ? 'Новий проєкт' : tab === 'recurring' ? 'Нова операція' : tab === 'imports' ? 'Імпортувати' : 'Додати чек';
+  const actionLabel = tab === 'budgets' ? 'Новий бюджет' : tab === 'projects' ? 'Новий проєкт' : tab === 'recurring' ? 'Нова операція' : 'Імпортувати';
 
   return <main className="screen">
     <header className="screen-header">
@@ -241,7 +177,6 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
       <button className="secondary-action" onClick={() => void financeApi.generateOccurrences().then(load)}>Оновити календар</button>
       <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><div><button onClick={() => { setPaymentOccurrence(item); setPaymentAccountId(rule?.accountId || accounts[0]?.id || ''); setPaymentAmount(String(amountMinor / 100).replace('.', ',')); }}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
     </>}
-    {tab === 'receipts' && <div className="planning-list">{receipts.map(receipt => <article key={receipt.id}><strong>{receipt.fileName}</strong><span>{receipt.status}</span></article>)}</div>}
 
     {dialogOpen && tab === 'budgets' && <Dialog title={editingBudget ? 'Редагувати бюджет' : 'Новий бюджет'} onClose={() => { setEditingBudget(null); setDialogOpen(false); }}>
       <div className="planning-form">
@@ -280,21 +215,6 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
         <label>Файл<input type="file" accept=".csv,.ofx,text/csv,application/x-ofx" onChange={event => { const file = event.target.files?.[0]; if (file) { setImportFormat(file.name.toLowerCase().endsWith('.ofx') ? 'ofx' : 'csv'); void file.text().then(setContent); } }} /></label>
         <label>Вміст<textarea rows={8} value={content} onChange={event => setContent(event.target.value)} /></label>
         <button className="primary" disabled={!content || !accountId} onClick={() => void importFile()}>Перевірити та імпортувати</button>
-      </div>
-    </Dialog>}
-    {dialogOpen && tab === 'receipts' && <Dialog title="Новий чек" onClose={() => setDialogOpen(false)}>
-      <div className="planning-form">
-        {!scannerOpen && <><button className="primary" type="button" onClick={() => setScannerOpen(true)}>Сканувати QR-код</button><label>Або завантажити фото<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={event => event.target.files?.[0] && void upload(event.target.files[0])} /></label></>}
-        {scannerOpen && <><QrScanner onScan={data => void scanTaxQr(data)} onError={setError} /><button className="secondary-action" type="button" onClick={() => setScannerOpen(false)}>Скасувати сканування</button></>}
-        {draft && <>
-          <label>Магазин / опис<input value={name} onChange={event => setName(event.target.value)} /></label>
-          <label>Сума<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /></label>
-          <label>Дата<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
-          <label>Рахунок<select value={accountId} onChange={event => setAccountId(event.target.value)}><option value="">Оберіть рахунок</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
-          <label>Категорія<select value={receiptCategory} onChange={event => setReceiptCategory(event.target.value)}><option value="">Без категорії</option><CategoryOptions categories={categories} type="expense" /></select></label>
-          <label>Проєкт<select value={receiptProject} onChange={event => setReceiptProject(event.target.value)}><option value="">Без проєкту</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
-          <button className="primary" onClick={() => void confirmDraft()}>Підтвердити чек</button>
-        </>}
       </div>
     </Dialog>}
   </main>;
