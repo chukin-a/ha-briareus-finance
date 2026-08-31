@@ -4,6 +4,7 @@ import { financeApi } from '../api/client';
 import { CategoryOptions } from '../components/CategoryOptions';
 import { Dialog } from '../components/Dialog';
 import { InstallmentsPanel } from '../components/InstallmentsPanel';
+import { QrScanner, type TaxQrData } from '../components/QrScanner';
 import { money, parseMinor, shortDate } from '../lib/money';
 import type { Account, BudgetProgress, Category, InstallmentPlan, Project, ReceiptDraft, RecurringOccurrence, RecurringRule } from '../types/finance';
 
@@ -23,7 +24,7 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
   refreshKey: number;
   onBack: () => void;
   onChanged: () => void;
-  onReceiptReady: (draft: { receiptId: string; amountMinor: number | null; currency: string; occurredOn: string | null; description: string | null; tags: string[]; metadata: Record<string, unknown> }) => void;
+  onReceiptReady: (draft: { receiptId?: string; amountMinor: number | null; currency: string; occurredOn: string | null; description: string | null; tags: string[]; metadata: Record<string, unknown> }) => void;
 }) {
   const [tab, setTab] = useState<Tab>('budgets');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,6 +56,7 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
   const [paymentOccurrence, setPaymentOccurrence] = useState<RecurringOccurrence | null>(null);
   const [paymentAccountId, setPaymentAccountId] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   async function load() {
     try {
@@ -158,6 +160,16 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Помилка завантаження');
+    }
+  }
+  async function scanTaxQr(data: TaxQrData) {
+    try {
+      const extracted = await financeApi.lookupTaxReceipt(data);
+      onReceiptReady({ ...extracted, metadata: { ...extracted.metadata, url: data.url } });
+      setScannerOpen(false);
+      setDialogOpen(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Не вдалося отримати чек з ДПС');
     }
   }
   async function confirmDraft() {
@@ -272,7 +284,8 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
     </Dialog>}
     {dialogOpen && tab === 'receipts' && <Dialog title="Новий чек" onClose={() => setDialogOpen(false)}>
       <div className="planning-form">
-        <label>Фото чека<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={event => event.target.files?.[0] && void upload(event.target.files[0])} /></label>
+        {!scannerOpen && <><button className="primary" type="button" onClick={() => setScannerOpen(true)}>Сканувати QR-код</button><label>Або завантажити фото<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={event => event.target.files?.[0] && void upload(event.target.files[0])} /></label></>}
+        {scannerOpen && <><QrScanner onScan={data => void scanTaxQr(data)} onError={setError} /><button className="secondary-action" type="button" onClick={() => setScannerOpen(false)}>Скасувати сканування</button></>}
         {draft && <>
           <label>Магазин / опис<input value={name} onChange={event => setName(event.target.value)} /></label>
           <label>Сума<input inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /></label>

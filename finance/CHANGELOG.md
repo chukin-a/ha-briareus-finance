@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+- Added a transaction-toolbar action for local fiscal receipt QR scanning and lookup through the State Tax Service register.
+
+## 0.3.3
+
+- Added local QR scanning for fiscal receipt URLs and lookup through the State Tax Service register.
+
 ## 0.3.2
 
 - Added a secret Home Assistant add-on option for the State Tax Service fiscal receipt API token.

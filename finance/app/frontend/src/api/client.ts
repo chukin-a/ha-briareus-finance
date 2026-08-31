@@ -60,6 +60,7 @@ export const financeApi = {
   getReceipts: () => request<ReceiptDraft[]>('receipts'),
   createReceipt: (body:Record<string,unknown>) => request<ReceiptDraft>('receipts',{method:'POST',body:JSON.stringify(body)}),
   ocrReceipt: (id:string) => request<{receiptId:string;merchant:string|null;occurredOn:string|null;amountMinor:number|null;currency:string;description:string|null;categoryId:null;projectId:null;tags:string[];metadata:Record<string,unknown>}>(`receipts/${id}/ocr`,{method:'POST'}),
+  lookupTaxReceipt: (body:Record<string,unknown>) => request<{id:string;merchant:string|null;occurredOn:string|null;amountMinor:number|null;currency:string;description:string|null;tags:string[];metadata:Record<string,unknown>}>('receipts/tax-lookup',{method:'POST',body:JSON.stringify(body)}),
   updateReceipt: (id:string,body:Record<string,unknown>) => request<ReceiptDraft>(`receipts/${id}`,{method:'PATCH',body:JSON.stringify(body)}),
   confirmReceipt: (id:string) => request<ReceiptDraft>(`receipts/${id}/confirm`,{method:'POST'}),
   cancelReceipt: (id:string) => request<ReceiptDraft>(`receipts/${id}/cancel`,{method:'POST'}),

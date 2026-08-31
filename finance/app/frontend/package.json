@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@untitledui/icons": "latest",
+    "@zxing/browser": "^0.2.1",
     "lucide-react": "^0.545.0",
     "react": "^19.1.1",
     "react-aria-components": "latest",
