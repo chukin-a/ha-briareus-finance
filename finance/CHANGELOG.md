@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.7
+
+- Remembered the last account selected for a new transaction.
+- Restored the saved account after component remounts and add-on navigation.
+
+## 0.4.6
+
+- Added the `tax_api_enabled` Home Assistant add-on option.
+- Disabled DPS requests and hid receipt refresh when the option is off.
+
 ## 0.4.5
 
 - Added the `tax_api_enabled` Home Assistant add-on option.
