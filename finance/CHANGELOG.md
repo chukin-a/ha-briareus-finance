@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.8
+
+- Added backend coverage for financial domain rules, planning, security, SSE, heartbeat, outbox delivery, and DPS receipt parsing.
+- Added frontend unit/component coverage for periods, categories, transactions, payments, summaries, and QR scanning.
+- Added Playwright E2E coverage for transaction creation and account preference persistence.
+- Fixed receipt refresh visibility when DPS requests are disabled.
+- Added test-result artifacts to `.gitignore`.
+
 ## 0.4.7
 
 - Remembered the last account selected for a new transaction.
