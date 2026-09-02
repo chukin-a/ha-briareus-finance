@@ -69,7 +69,7 @@ export function Payments({ accounts, period, range, onPeriodChange, onRangeChang
           {payment.action==='confirm_or_skip'&&<button disabled={busy===payment.id} onClick={()=>{setConfirming(payment);setAccountId(payment.accountId || accounts[0]?.id || '');setPaymentAmount(String(payment.amountMinor / 100).replace('.', ','));}}><Check size={15}/>Підтвердити</button>}
           {payment.action==='confirm_or_skip'&&<button disabled={busy===payment.id} onClick={()=>void run(payment.id, async()=>financeApi.skipOccurrence(payment.sourceId))}><X size={15}/>Пропустити</button>}
           {payment.action==='pay'&&<button disabled={busy===payment.id} onClick={()=>void run(payment.id, async()=>financeApi.payObligation(payment.sourceId))}><Check size={15}/>Оплатити</button>}
-          {payment.action==='manual'&&<span>Оплатити вручну</span>}
+          {payment.action==='manual'&&<span>{payment.status === 'overdue' ? 'Пільговий період втрачено' : 'Оплатити вручну'}</span>}
         </div>
       </article>)}
     </div>

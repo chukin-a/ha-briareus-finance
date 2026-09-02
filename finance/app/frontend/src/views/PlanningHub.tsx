@@ -6,15 +6,18 @@ import { Dialog } from '../components/Dialog';
 import { InstallmentsPanel } from '../components/InstallmentsPanel';
 import { money, parseMinor, shortDate } from '../lib/money';
 import type { Account, BudgetProgress, Category, InstallmentPlan, Project, RecurringOccurrence, RecurringRule } from '../types/finance';
+import type { CustomRange, PeriodPreset } from '../components/PeriodPicker';
 
 type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports';
 const toMinor = parseMinor;
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function PlanningHub({ accounts, categories, projects, refreshKey, onChanged }: {
+export function PlanningHub({ accounts, categories, projects, period, range, refreshKey, onChanged }: {
   accounts: Account[];
   categories: Category[];
   projects: Project[];
+  period: PeriodPreset;
+  range: CustomRange;
   refreshKey: number;
   onBack: () => void;
   onChanged: () => void;
@@ -48,7 +51,7 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
   async function load() {
     try {
       const data = await Promise.all([
-        financeApi.getBudgets(),
+        financeApi.getBudgets(period, range),
         financeApi.getRecurring(),
         financeApi.getOccurrences(),
         financeApi.getInstallments(),
@@ -61,7 +64,7 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
       setError(cause instanceof Error ? cause.message : 'Помилка завантаження');
     }
   }
-  useEffect(() => { void load(); }, [refreshKey]);
+  useEffect(() => { void load(); }, [refreshKey, period, range]);
 
   function switchTab(value: Tab) {
     setTab(value);
@@ -82,7 +85,6 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
           name: name.trim(),
           plannedAmountMinor: amountMinor,
           currency: 'UAH',
-          periodStart: date,
           cadence,
           rolloverEnabled: rollover,
           warningPercent: Number(warning),
@@ -162,7 +164,7 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
         <div><strong>{budget.name}</strong><b>{budget.percentage}%</b></div>
         <span>{money(budget.spentMinor, budget.currency)} з {money(budget.plannedAmountMinor, budget.currency)}</span>
         <progress max="100" value={Math.min(100, budget.percentage)} />
-        <div><small>{budget.exceeded ? `Перевищено на ${money(Math.abs(budget.remainingMinor), budget.currency)}` : `Залишок: ${money(budget.remainingMinor, budget.currency)}`}</small><span className="planning-actions"><button aria-label="Редагувати бюджет" onClick={() => { setEditingBudget(budget); setName(budget.name); setAmount(String(budget.plannedAmountMinor / 100).replace('.', ',')); setDate(budget.periodStart); setCadence(budget.cadence); setRollover(budget.rolloverEnabled); setWarning(String(budget.warningPercent)); setScope(budget.categoryId ? 'category' : budget.projectId ? 'project' : 'all'); setScopeId(budget.categoryId || budget.projectId || ''); setError(''); setDialogOpen(true); }}><Pencil size={15} /></button><button aria-label="Видалити бюджет" onClick={() => window.confirm(`Видалити бюджет «${budget.name}»?`) && void financeApi.deleteBudget(budget.id).then(load)}><Trash2 size={15} /></button></span></div>
+        <div><small>{budget.exceeded ? `Перевищено на ${money(Math.abs(budget.remainingMinor), budget.currency)}` : `Залишок: ${money(budget.remainingMinor, budget.currency)}`}</small><span className="planning-actions"><button aria-label="Редагувати бюджет" onClick={() => { setEditingBudget(budget); setName(budget.name); setAmount(String(budget.plannedAmountMinor / 100).replace('.', ',')); setCadence(budget.cadence); setRollover(budget.rolloverEnabled); setWarning(String(budget.warningPercent)); setScope(budget.categoryId ? 'category' : budget.projectId ? 'project' : 'all'); setScopeId(budget.categoryId || budget.projectId || ''); setError(''); setDialogOpen(true); }}><Pencil size={15} /></button><button aria-label="Видалити бюджет" onClick={() => window.confirm(`Видалити бюджет «${budget.name}»?`) && void financeApi.deleteBudget(budget.id).then(load)}><Trash2 size={15} /></button></span></div>
       </article>)}
     </div>}
     {tab === 'recurring' && <>
@@ -179,7 +181,6 @@ export function PlanningHub({ accounts, categories, projects, refreshKey, onChan
         {scope === 'category' && <label>Категорія<select value={scopeId} onChange={event => setScopeId(event.target.value)}><option value="">Оберіть категорію</option><CategoryOptions categories={categories} type="expense" /></select></label>}
         {scope === 'project' && <label>Проєкт<select value={scopeId} onChange={event => setScopeId(event.target.value)}><option value="">Оберіть проєкт</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>}
         <label>Період<select value={cadence} onChange={event => setCadence(event.target.value)}><option value="monthly">Місяць</option><option value="quarterly">Квартал</option><option value="yearly">Рік</option></select></label>
-        <label>Початок періоду<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
         <label>Попередити на, %<input type="number" min="1" max="100" value={warning} onChange={event => setWarning(event.target.value)} /></label>
         <label className="check-row"><input type="checkbox" checked={rollover} onChange={event => setRollover(event.target.checked)} />Переносити невикористаний залишок</label>
         <button className="primary" onClick={() => void createPlanningItem()}>{editingBudget ? 'Зберегти зміни' : 'Створити бюджет'}</button>

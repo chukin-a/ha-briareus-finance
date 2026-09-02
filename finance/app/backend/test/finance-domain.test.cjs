@@ -89,6 +89,7 @@ test('budget progress includes descendants of selected parent category but exclu
     ] }),
   });
   assert.equal((await service.budgetProgress('budget-1')).spentMinor, 2500);
+  assert.equal((await service.budgetProgress('budget-1', '2026-08-15')).spentMinor, 0);
 });
 
 test('budgets use calendar periods for quarterly and yearly cadence', async () => {
@@ -114,6 +115,26 @@ test('credit card payments are split by statement month and applied to the oldes
     tx('expense', '2026-08-10', 30000), tx('expense', '2026-09-05', 4000), tx('income', '2026-08-20', 4000),
   ]);
   assert.deepEqual(items.map(item => [item.amountMinor, item.dueDate]), [[26000, '2026-09-30'], [4000, '2026-10-31']]);
+});
+
+test('a missed old grace deadline marks the remaining current obligation as overdue', () => {
+  const service = extendedService();
+  const account = { id: 'card', name: 'Тестова кредитна картка', type: 'credit_card', currency: 'UAH', gracePeriodRule: 'next_month_end', gracePeriodDay: null };
+  const tx = (type, occurredOn, amountMinor) => ({ accountId: 'card', type, occurredOn, occurredAt: `${occurredOn}T12:00:00.000Z`, amountMinor });
+  const items = service.creditPaymentItems(account, [
+    tx('expense', '2026-07-10', 30000), tx('expense', '2026-08-05', 4000), tx('income', '2026-09-01', 10000),
+  ]);
+  assert.equal(items.every(item => item.status === 'overdue'), true);
+});
+
+test('a new grace period starts after the card debt reaches zero', () => {
+  const service = extendedService();
+  const account = { id: 'card', name: 'Тестова кредитна картка', type: 'credit_card', currency: 'UAH', gracePeriodRule: 'next_month_end', gracePeriodDay: null };
+  const tx = (type, occurredOn, amountMinor) => ({ accountId: 'card', type, occurredOn, occurredAt: `${occurredOn}T12:00:00.000Z`, amountMinor });
+  const items = service.creditPaymentItems(account, [
+    tx('expense', '2026-07-10', 30000), tx('income', '2026-09-01', 30000), tx('expense', '2026-09-02', 4000),
+  ]);
+  assert.deepEqual(items.map(item => [item.amountMinor, item.status]), [[4000, 'pending']]);
 });
 
 test('non-owner cannot update a transaction', async () => {

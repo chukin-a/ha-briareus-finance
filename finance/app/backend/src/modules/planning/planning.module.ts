@@ -3,16 +3,17 @@ import { Module } from '@nestjs/common';
 import { FinanceService } from '../finance/application/finance.service';
 import { ExtendedFinanceService } from './extended-finance.service';
 import { PeriodQueryDto } from '../../shared/presentation/period-query.dto';
+import { resolvePeriod } from '../../shared/domain/period';
 
 type HeadersMap = Record<string, string | string[] | undefined>;
 @Controller()
 class PlanningController {
   constructor(private finance: FinanceService, private extended: ExtendedFinanceService) {}
-  @Get('budgets') listBudgets() { return this.extended.listBudgets(); }
+  @Get('budgets') listBudgets(@Query() query: PeriodQueryDto) { return this.extended.listBudgets(query); }
   @Post('budgets') async createBudget(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.extended.createBudget(b, await this.finance.getCurrentUser(h)); }
   @Patch('budgets/:id') async updateBudget(@Param('id') id:string,@Headers() h:HeadersMap,@Body() b:Record<string,unknown>){return this.extended.updateBudget(id,b,await this.finance.getCurrentUser(h));}
   @Delete('budgets/:id') async deleteBudget(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.deleteBudget(id,await this.finance.getCurrentUser(h));}
-  @Get('budgets/:id/progress') progress(@Param('id') id: string) { return this.extended.budgetProgress(id); }
+  @Get('budgets/:id/progress') progress(@Param('id') id: string, @Query() query: PeriodQueryDto) { return this.extended.budgetProgress(id, resolvePeriod(query).from); }
   @Post('budgets/:id/rollover') rollover(@Param('id') id:string){return this.extended.rolloverBudget(id);}
   @Get('recurring') recurring() { return this.finance.listRecurring(); }
   @Post('recurring') async createRecurring(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.finance.createRecurring(b as never, await this.finance.getCurrentUser(h)); }
@@ -40,5 +41,6 @@ class PlanningController {
   @Get('export') exportJson(){return this.extended.exportJson();}
   @Get('analytics') analytics(@Query() query: PeriodQueryDto) { return this.finance.analytics(query); }
   @Get('payments') payments(@Query() query: PeriodQueryDto) { return this.extended.listPayments(query); }
+  @Get('credit-payments') creditPayments() { return this.extended.listCreditPayments(); }
 }
 @Module({ controllers: [PlanningController] }) export class PlanningModule {}

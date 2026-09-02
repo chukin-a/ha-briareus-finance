@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0
+
+- Fixed grace-period status propagation to future credit-card obligations until the full debt is repaid.
+- Restarted the grace period only after the card debt reaches zero and a new credit purchase occurs.
+- Budget progress now follows the selected calendar period instead of fixed budget dates.
+
 ## 0.4.9
 
 - Fixed credit-card grace-period calculations by separating obligations by spending month.

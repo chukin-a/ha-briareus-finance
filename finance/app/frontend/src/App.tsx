@@ -42,7 +42,7 @@ export default function App() {
   else if(page==='payments') content=<Payments accounts={accounts} period={period} range={customRange} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
   else if(page==='accounts') content=<Accounts accounts={accounts} onDelete={deleteAccount} onCreated={()=>void load(false)}/>;
   else if(page==='transactions') content=<Transactions transactions={transactions} accounts={accounts} categories={categories} projects={projects} period={period} range={customRange} taxApiEnabled={taxApiEnabled} onPeriodChange={setPeriod} onRangeChange={setCustomRange} onChanged={()=>void load(false)}/>;
-  else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} refreshKey={dataVersion} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)}/>;
+  else if(page==='budgets') content=<PlanningHub accounts={accounts} categories={categories} projects={projects} period={period} range={customRange} refreshKey={dataVersion} onBack={()=>setPage('dashboard')} onChanged={()=>void load(false)}/>;
   else if(page==='categories') content=<Categories categories={categories} onBack={()=>setPage('settings')} onChanged={()=>void load(false)}/>;
   else if(page==='projects') content=<Projects projects={projects} onBack={()=>setPage('budgets')} onChanged={()=>void load(false)}/>;
   else if(page==='users') content=<Users onBack={()=>setPage('settings')}/>;
