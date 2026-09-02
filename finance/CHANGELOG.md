@@ -7,7 +7,7 @@
 - Added selected-period budget limits for monthly, quarterly, and yearly budgets.
 - Added warning and exceeded budget progress states on overview and planning pages.
 - Added varied local analytics income and expense data plus recurring payments and installment obligations.
-- Added guarded development data repair and seed scripts without affecting production.
+- Added varied local analytics data plus recurring payments and installment obligations without affecting production.
 
 ## 0.5.6
 
