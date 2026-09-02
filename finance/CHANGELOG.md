@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.3
+
+- Restored the largest-expenses section on the analytics page with the top 10 expenses for the selected period.
+- Kept category drill-down transactions on the dedicated category analytics page.
+
 ## 0.5.2
 
 - Replaced the category expense list with a root-category pie chart.
