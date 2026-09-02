@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2
+
+- Replaced the category expense list with a root-category pie chart.
+- Added drill-down into child categories and direct root-category expenses.
+- Added transaction details for the selected category branch.
+
 ## 0.5.1
 
 - Included opening credit-card debt in the previous grace-period obligation.

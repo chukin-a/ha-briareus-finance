@@ -39,7 +39,7 @@ class PlanningController {
   @Get('settings') settings(){return this.extended.getSettings();}
   @Put('settings') saveSettings(@Body() b:Record<string,unknown>){return this.extended.saveSettings(b);}
   @Get('export') exportJson(){return this.extended.exportJson();}
-  @Get('analytics') analytics(@Query() query: PeriodQueryDto) { return this.finance.analytics(query); }
+  @Get('analytics') analytics(@Query() query: PeriodQueryDto & { categoryId?: string }) { return this.finance.analytics(query); }
   @Get('payments') payments(@Query() query: PeriodQueryDto) { return this.extended.listPayments(query); }
   @Get('credit-payments') creditPayments() { return this.extended.listCreditPayments(); }
 }

@@ -96,10 +96,16 @@ export class FinanceService {
   private installmentRows(plan:InstallmentPlanEntity,completed:number,principalTotal:number,count:number){let outstanding=principalTotal;return Array.from({length:count},(_,offset)=>{const sequence=completed+offset+1,base=Math.floor(principalTotal/count),principal=base+(offset===count-1?principalTotal-base*count:0),interest=plan.interestMode==='none'?0:this.rateMinor(plan.interestMode==='flat'?plan.totalAmountMinor:outstanding,plan.monthlyRateBps);outstanding-=principal;return this.obligations.create({id:randomUUID(),planId:plan.id,sequenceNumber:sequence,dueDate:this.addMonths(plan.firstDueDate,sequence-1),amountMinor:principal+interest,principalMinor:principal,interestMinor:interest,status:'pending',transactionId:null,paidAt:null});});}
   private rateMinor(amountMinor:number,rateBps:number){return Number((BigInt(amountMinor)*BigInt(rateBps)+5000n)/10000n);}
   private addMonths(date: string, count: number) { const source=new Date(`${date}T00:00:00Z`),day=source.getUTCDate();const target=new Date(Date.UTC(source.getUTCFullYear(),source.getUTCMonth()+count,1));const last=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate();target.setUTCDate(Math.min(day,last));return target.toISOString().slice(0,10); }
-  async analytics(query: { preset?: PeriodPreset; from?: string; to?: string } = {}) {
+  async analytics(query: { preset?: PeriodPreset; from?: string; to?: string; categoryId?: string } = {}) {
     const period = resolvePeriod(query);
     const transactions = await this.transactions.find();
-    const selected = transactions.filter(t => t.occurredOn >= period.from && t.occurredOn < period.to);
+    const categories = await this.categories.find();
+    const categoryById = new Map(categories.map(category => [category.id, category]));
+    const descendants = (id: string) => categories.filter(category => { let parent = category.parentId; while (parent) { if (parent === id) return true; parent = categoryById.get(parent)?.parentId || null; } return false; });
+    const rootCategory = (id: string | null) => { if (!id) return null; let category = categoryById.get(id); while (category?.parentId) category = categoryById.get(category.parentId); return category?.id || id; };
+    const directCategory = (id: string | null, selectedId?: string) => { if (!id) return null; if (!selectedId) return rootCategory(id); if (id === selectedId) return 'direct'; let category = categoryById.get(id); while (category?.parentId && category.parentId !== selectedId) category = categoryById.get(category.parentId); return category?.id || id; };
+    const scopeIds = query.categoryId ? new Set([query.categoryId, ...descendants(query.categoryId).map(category => category.id)]) : null;
+    const selected = transactions.filter(t => t.occurredOn >= period.from && t.occurredOn < period.to && (!scopeIds || !!t.categoryId && scopeIds.has(t.categoryId)));
     const grouped = (type: string) => Object.entries(selected.filter(t => t.type === type).reduce<Record<string, number>>((result, t) => {
       result[t.currency] = (result[t.currency] || 0) + t.amountMinor;
       return result;
@@ -108,7 +114,7 @@ export class FinanceService {
     const expenses = grouped('expense');
     const currencies = [...new Set([...income, ...expenses].map(row => row.currency))];
     const byCategory = Object.entries(selected.filter(t => t.type === 'expense').reduce<Record<string, number>>((result, t) => {
-      const key = `${t.currency}:${t.categoryId || 'uncategorized'}`;
+      const key = `${t.currency}:${directCategory(t.categoryId, query.categoryId) || 'uncategorized'}`;
       result[key] = (result[key] || 0) + t.amountMinor;
       return result;
     }, {})).map(([key, amountMinor]) => {
@@ -142,6 +148,7 @@ export class FinanceService {
       byCategory,
       trend,
       largestExpenses,
+      categoryTransactions: selected.filter(t => t.type === 'expense').map(t => ({ id: t.id, amountMinor: t.amountMinor, currency: t.currency, description: t.description, occurredOn: t.occurredOn, categoryId: t.categoryId, accountId: t.accountId, projectId: t.projectId })),
     };
   }
 }
