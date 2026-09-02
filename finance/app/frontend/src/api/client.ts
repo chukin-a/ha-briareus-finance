@@ -1,4 +1,4 @@
-import type { Account, AppSettings, Budget, BudgetProgress, Category, CreditSummary, CreditTerms, ImportReport, InstallmentPlan, PaymentsReport, Project, RecurringOccurrence, RecurringRule, RuntimeConfig, Transaction, User } from '../types/finance';
+import type { Account, AppSettings, Budget, BudgetProgress, Category, CreditSummary, CreditTerms, ImportReport, InstallmentPlan, PaymentsReport, Project, ProjectDetails, RecurringOccurrence, RecurringRule, RuntimeConfig, Transaction, User } from '../types/finance';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`./api/${path}`, { headers: { 'Content-Type': 'application/json', ...init?.headers }, ...init });
@@ -11,6 +11,7 @@ export const financeApi = {
   getTransactions: (preset = 'current_month',range?:{from:string;to:string}) => request<{ items: Transaction[] }>(`transactions?${preset==='custom'&&range?`from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`:`preset=${encodeURIComponent(preset)}`}`).then(result => result.items),
   getCategories: () => request<Category[]>('categories'),
   getProjects: () => request<Project[]>('projects'),
+  getProject: (id:string) => request<ProjectDetails>(`projects/${id}`),
   getMe: () => request<User>('me'),
   getUsers: () => request<User[]>('users'),
   setUserAccess: (id:string,blocked:boolean) => request<User>(`users/${id}/access`,{method:'PATCH',body:JSON.stringify({blocked})}),

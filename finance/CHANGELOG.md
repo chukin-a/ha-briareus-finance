@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.5
+
+- Added a dedicated project details screen with monthly expense breakdown and project transactions.
+- Moved project archiving into the project details screen.
+- Fixed duplicate credit-card repayment sections on the overview page.
+
 ## 0.5.4
 
 - Moved analytics drill-down to a dedicated screen without a duplicate period picker.

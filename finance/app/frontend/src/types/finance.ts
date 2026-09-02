@@ -15,6 +15,7 @@ export interface Transaction {
 
 export interface Category { id: string; name: string; type: 'income' | 'expense'; parentId: string | null; icon: string; color: string; sortOrder: number; archived?: boolean; }
 export interface Project { id: string; name: string; plannedAmountMinor: number; currency: string; spentMinor?:number; remainingMinor?:number; percentage?:number; status?: 'active' | 'completed' | 'archived'; endOn?: string | null; }
+export interface ProjectDetails { project: Project; monthlyExpenses: Array<{ month: string; amountMinor: number; currency: string }>; transactions: Array<{ id: string; amountMinor: number; currency: string; description: string | null; occurredOn: string; categoryId: string | null; accountId: string }>; }
 
 export interface User { id: string; name: string; createdAt?: string; lastSeenAt?: string | null; blocked?: boolean; current?: boolean; }
 export interface Budget { id: string; name: string; categoryId: string | null; projectId: string | null; periodStart: string; periodEnd: string; plannedAmountMinor: number; currency: string; active?: boolean; cadence: 'monthly' | 'quarterly' | 'yearly'; rolloverEnabled: boolean; warningPercent: number; }
