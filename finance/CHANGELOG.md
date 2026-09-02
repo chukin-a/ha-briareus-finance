@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.4
+
+- Moved analytics drill-down to a dedicated screen without a duplicate period picker.
+- Fixed pie-chart center values and category legend spacing.
+- Reordered overview sections so credit-card repayments appear before period payments.
+
 ## 0.5.3
 
 - Restored the largest-expenses section on the analytics page with the top 10 expenses for the selected period.

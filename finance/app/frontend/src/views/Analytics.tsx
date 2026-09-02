@@ -26,7 +26,7 @@ export function Analytics({ categories, period, range, onPeriodChange, onRangeCh
   const categoryName=(id:string|null)=>id==='uncategorized'?'Без категорії':id==='direct'?'Прямі витрати':categories.find(category=>category.id===id)?.name||'Витрати';
   const colors=['#ffc35b','#ff7650','#8eb8ff','#b78cff','#73d6ae','#f18ac4'];
   if (drillCategory && data) {
-    return <AnalyticsCategory data={data} categoryId={drillCategory} categories={categories} period={period} range={range} onPeriodChange={onPeriodChange} onRangeChange={onRangeChange} onBack={()=>setDrillCategory(null)} />;
+    return <AnalyticsCategory data={data} categoryId={drillCategory} categories={categories} onBack={()=>setDrillCategory(null)} />;
   }
   let chartOffset=0;
   return <main className="screen analytics-screen"><header className="screen-header"><div><span className="eyebrow">ФІНАНСОВИЙ ОГЛЯД</span><h1>Аналітика</h1></div><div className="round-action"><ChartPie/></div></header><div className="period"><PeriodPicker value={period} range={range} onChange={onPeriodChange} onRangeChange={onRangeChange}/></div>{error&&<div className="category-error">{error}</div>}{!data?<p className="empty">Завантаження…</p>:<>
