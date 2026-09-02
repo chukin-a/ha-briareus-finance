@@ -9,6 +9,4 @@ dev/
 /finance/app/frontend/dist
 /finance/app/**/tsconfig*.tsbuildinfo
 /finance/app/frontend/test-results
-/finance/app/backend/data/finance.sqlite
-/finance/app/backend/scripts/seed-money-flow.mjs
-/finance/app/backend/scripts/
+/finance/app/backend/data
