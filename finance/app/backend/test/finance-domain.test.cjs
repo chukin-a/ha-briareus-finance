@@ -137,6 +137,14 @@ test('a new grace period starts after the card debt reaches zero', () => {
   assert.deepEqual(items.map(item => [item.amountMinor, item.status]), [[4000, 'pending']]);
 });
 
+test('opening credit-card debt is shown as the previous period obligation', () => {
+  const service = extendedService();
+  const account = { id: 'card', name: 'Тестова кредитна картка', type: 'credit_card', currency: 'UAH', initialBalanceMinor: 74000, creditLimitMinor: 100000, gracePeriodRule: 'next_month_end', gracePeriodDay: null };
+  const items = service.creditPaymentItems(account, [{ accountId: 'card', type: 'expense', occurredOn: '2026-09-02', occurredAt: '2026-09-02T12:00:00.000Z', amountMinor: 400000 }]);
+  assert.equal(items.some(item => item.amountMinor === 26000 && item.dueDate.endsWith('-09-30')), true);
+  assert.equal(items.some(item => item.amountMinor === 400000 && item.dueDate.endsWith('-10-31')), true);
+});
+
 test('non-owner cannot update a transaction', async () => {
   const service = financeService({ transactions: repo({ findOneBy: async () => ({ id: 'tx-1', ownerId: 'another' }) }) });
   await assert.rejects(() => service.updateTransaction('tx-1', { description: 'Nope' }, owner), /Only the transaction owner/);

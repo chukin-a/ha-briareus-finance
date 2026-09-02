@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+
+- Included opening credit-card debt in the previous grace-period obligation.
+- Credit-card obligations now show separate amounts for the current and previous periods.
+
 ## 0.5.0
 
 - Fixed grace-period status propagation to future credit-card obligations until the full debt is repaid.

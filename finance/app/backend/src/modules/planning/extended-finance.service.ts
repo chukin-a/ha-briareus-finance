@@ -86,6 +86,11 @@ export class ExtendedFinanceService {
   private creditPaymentItems(account:AccountEntity, txs:TransactionEntity[]) {
     if (!account.gracePeriodRule) return [];
     const charges = new Map<string, { amountMinor: number; paidMinor: number; paidByDeadlineMinor: number; dueDate: string; firstDate: string }>();
+    const today = localDateFromIso(new Date().toISOString());
+    const [currentYear, currentMonth] = today.slice(0, 7).split('-').map(Number);
+    const previousMonth = new Date(Date.UTC(currentYear, currentMonth - 2, 1)).toISOString().slice(0, 7);
+    const openingDebt = Number.isInteger(account.creditLimitMinor) && Number.isInteger(account.initialBalanceMinor) ? Math.max(0, account.creditLimitMinor! - account.initialBalanceMinor) : 0;
+    if (openingDebt > 0) charges.set(previousMonth, { amountMinor: openingDebt, paidMinor: 0, paidByDeadlineMinor: 0, dueDate: this.creditDueDate(account, previousMonth), firstDate: '0000-01-01' });
     for (const tx of txs.filter(row => row.accountId === account.id && row.type === 'expense')) {
       const month = tx.occurredOn.slice(0, 7);
       const dueDate = this.creditDueDate(account, month);
@@ -95,7 +100,6 @@ export class ExtendedFinanceService {
       charges.set(month, current);
     }
     const events = txs.filter(row => row.accountId === account.id && (row.type === 'expense' || row.type === 'income' || row.type === 'transfer_in')).sort((a,b)=>a.occurredOn.localeCompare(b.occurredOn)||a.occurredAt.localeCompare(b.occurredAt));
-    const today = localDateFromIso(new Date().toISOString());
     let graceBlocked = false;
     const checkDeadlines = (until: string) => { for (const charge of charges.values()) if (charge.dueDate < until && charge.paidMinor < charge.amountMinor && charge.paidByDeadlineMinor < charge.amountMinor) graceBlocked = true; };
     for (const event of events) {
