@@ -4,6 +4,7 @@ import {financeApi} from '../api/client';
 import {money, parseMinor} from '../lib/money';
 import type {Account, InstallmentPlan} from '../types/finance';
 import {Dialog} from './Dialog';
+import {AuthorLabel} from './AuthorLabel';
 
 const basisPoints = parseMinor;
 const rateText = (bps: number) => `${Math.floor(bps / 100)}${bps % 100 ? `,${String(bps % 100).padStart(2, '0')}` : ''}`;
@@ -90,7 +91,9 @@ export function InstallmentsPanel({accounts, plans, reload, onChanged}: {
             <div>
                 <strong>{plan.name}</strong><span>{plan.interestMode === 'none' ? 'Без відсотків' : `${rateText(plan.monthlyRateBps)}% на місяць`}</span>
             </div>
-            <span>{accountName(plan.accountId)} · {money(plan.totalAmountMinor, plan.currency)} · {plan.installmentCount} платежів</span>{plan.obligations?.map(obligation =>
+            <span>{accountName(plan.accountId)} · {money(plan.totalAmountMinor, plan.currency)} · {plan.installmentCount} платежів</span>
+            <AuthorLabel ownerId={plan.ownerId} ownerName={plan.ownerName}/>
+            {plan.obligations?.map(obligation =>
             <div key={obligation.id}>
                 <small>№{obligation.sequenceNumber} · {obligation.dueDate} · {money(obligation.amountMinor, plan.currency)}{obligation.interestMinor ? ` (відсотки ${money(obligation.interestMinor, plan.currency)})` : ''}</small>{obligation.status !== 'paid' &&
                 <button onClick={() => void financeApi.payObligation(obligation.id).then(() => {

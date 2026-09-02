@@ -8,18 +8,24 @@ import { money, parseMinor, shortDate } from '../lib/money';
 import type { Account, BudgetProgress, Category, InstallmentPlan, Project, RecurringOccurrence, RecurringRule } from '../types/finance';
 import type { CustomRange, PeriodPreset } from '../components/PeriodPicker';
 import { ProjectDetails } from './ProjectDetails';
+import { BudgetDetails } from './BudgetDetails';
+import { AuthorLabel } from '../components/AuthorLabel';
 
 type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports';
 const toMinor = parseMinor;
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function PlanningHub({ accounts, categories, projects, period, range, refreshKey, onChanged }: {
+export function PlanningHub({ accounts, categories, projects, period, range, refreshKey, initialBudgetId, onInitialBudgetOpened, initialProjectId, onInitialProjectOpened, onBack, onChanged }: {
   accounts: Account[];
   categories: Category[];
   projects: Project[];
   period: PeriodPreset;
   range: CustomRange;
   refreshKey: number;
+  initialBudgetId?: string | null;
+  onInitialBudgetOpened?: () => void;
+  initialProjectId?: string | null;
+  onInitialProjectOpened?: () => void;
   onBack: () => void;
   onChanged: () => void;
 }) {
@@ -50,6 +56,9 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectDetails, setProjectDetails] = useState<Awaited<ReturnType<typeof financeApi.getProject>> | null>(null);
+  const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
+  const [budgetDetails, setBudgetDetails] = useState<Awaited<ReturnType<typeof financeApi.getBudget>> | null>(null);
+  const [returnToDashboard, setReturnToDashboard] = useState(false);
 
   async function load() {
     try {
@@ -68,11 +77,15 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
     }
   }
   useEffect(() => { void load(); }, [refreshKey, period, range]);
+  useEffect(() => { if (!initialBudgetId) return; void financeApi.getBudget(initialBudgetId, period, range).then(details => { setReturnToDashboard(true); setTab('budgets'); setBudgetDetails(details); setSelectedBudgetId(initialBudgetId); onInitialBudgetOpened?.(); }).catch(cause => setError(cause instanceof Error ? cause.message : 'Не вдалося завантажити бюджет')); }, [initialBudgetId, period, range, onInitialBudgetOpened]);
+  useEffect(() => { if (!initialProjectId) return; void financeApi.getProject(initialProjectId).then(details => { setReturnToDashboard(true); setTab('projects'); setProjectDetails(details); setSelectedProjectId(initialProjectId); onInitialProjectOpened?.(); }).catch(cause => setError(cause instanceof Error ? cause.message : 'Не вдалося завантажити проєкт')); }, [initialProjectId, onInitialProjectOpened]);
 
   function switchTab(value: Tab) {
     setTab(value);
     setSelectedProjectId(null);
     setProjectDetails(null);
+    setSelectedBudgetId(null);
+    setBudgetDetails(null);
     setDialogOpen(false);
     setError('');
   }
@@ -126,7 +139,7 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
   async function importFile() {
     try {
       const report = await financeApi.previewImport({ accountId, currency: 'UAH', format: importFormat, content });
-      if (window.confirm('Попередній перегляд готовий. Імпортувати нові рядки?')) {
+      if (window.confirm(`Попередній перегляд готовий. Автор: ${report.ownerName || report.ownerId}. Імпортувати нові рядки?`)) {
         await financeApi.confirmImport(String(report.id));
       }
       setContent('');
@@ -145,6 +158,9 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
       setError(cause instanceof Error ? cause.message : 'Не вдалося завантажити проєкт');
     }
   }
+  async function openBudget(budget:BudgetProgress){try{const details=await financeApi.getBudget(budget.id, period, range);setBudgetDetails(details);setSelectedBudgetId(budget.id)}catch(cause){setError(cause instanceof Error?cause.message:'Не вдалося завантажити бюджет')}}
+  function editBudget(budget:BudgetProgress){setEditingBudget(budget);setName(budget.name);setAmount(String(budget.plannedAmountMinor/100).replace('.',','));setCadence(budget.cadence);setRollover(budget.rolloverEnabled);setWarning(String(budget.warningPercent));setScope(budget.categoryId?'category':budget.projectId?'project':'all');setScopeId(budget.categoryId||budget.projectId||'');setError('');setSelectedBudgetId(null);setBudgetDetails(null);setDialogOpen(true)}
+  async function deleteBudget(){if(!budgetDetails||!window.confirm(`Видалити бюджет «${budgetDetails.budget.name}»?`))return;await financeApi.deleteBudget(budgetDetails.budget.id);setSelectedBudgetId(null);setBudgetDetails(null);onChanged();}
   async function archiveProject() {
     if (!projectDetails || !window.confirm(`Архівувати «${projectDetails.project.name}»?`)) return;
     try {
@@ -164,8 +180,8 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
     imports: 'Імпорт',
   };
   const actionLabel = tab === 'budgets' ? 'Новий бюджет' : tab === 'projects' ? 'Новий проєкт' : tab === 'recurring' ? 'Нова операція' : 'Імпортувати';
-
-  if (tab === 'projects' && selectedProjectId && projectDetails) return <ProjectDetails data={projectDetails} onBack={() => { setSelectedProjectId(null); setProjectDetails(null); }} onArchive={() => void archiveProject()} />;
+  if (tab === 'projects' && selectedProjectId && projectDetails) return <ProjectDetails data={projectDetails} accounts={accounts} categories={categories} onBack={() => { setSelectedProjectId(null); setProjectDetails(null); if (returnToDashboard) onBack(); }} onArchive={() => void archiveProject()} />;
+  if (tab === 'budgets' && selectedBudgetId && budgetDetails) return <BudgetDetails data={budgetDetails} accounts={accounts} categories={categories} onBack={() => { setSelectedBudgetId(null); setBudgetDetails(null); if (returnToDashboard) onBack(); }} onEdit={() => editBudget(budgetDetails.budget)} onDelete={() => void deleteBudget()} />;
 
   return <main className="screen">
     <header className="screen-header">
@@ -183,21 +199,22 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
     {tab === 'installments' && <InstallmentsPanel accounts={accounts} plans={plans} reload={load} onChanged={onChanged} />}
     {tab === 'projects' && <div className="planning-list">
       {!projects.length && <div className="empty-state">Ще немає проєктів.</div>}
-      {projects.map(project => <article key={project.id} role="button" tabIndex={0} onClick={() => void openProject(project)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void openProject(project); }}><div><Folder size={20} /><strong>{project.name}</strong><span>{project.percentage || 0}%</span></div><progress max="100" value={Math.min(100, project.percentage || 0)} /><small>{money(project.spentMinor || 0, project.currency)} з {money(project.plannedAmountMinor, project.currency)}</small></article>)}
+      {projects.map(project => <article key={project.id} role="button" tabIndex={0} onClick={() => void openProject(project)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void openProject(project); }}><div><Folder size={20} /><strong>{project.name}</strong><span>{project.percentage || 0}%</span></div><progress max="100" value={Math.min(100, project.percentage || 0)} /><small>{money(project.spentMinor || 0, project.currency)} з {money(project.plannedAmountMinor, project.currency)}</small><AuthorLabel ownerId={project.ownerId} ownerName={project.ownerName}/></article>)}
     </div>}
     {tab === 'budgets' && <div className="planning-list">
       {!budgets.length && <div className="empty-state">Ще немає бюджетів.</div>}
-      {budgets.map(budget => <article key={budget.id} className={budget.exceeded ? 'budget-over' : ''}>
+      {budgets.map(budget => <article key={budget.id} className={budget.percentage >= 100 ? 'budget-over' : budget.percentage >= budget.warningPercent ? 'budget-warning' : ''} role="button" tabIndex={0} onClick={() => void openBudget(budget)} onKeyDown={event => { if(event.key==='Enter'||event.key===' ')void openBudget(budget); }}>
         <div><strong>{budget.name}</strong><b>{budget.percentage}%</b></div>
         <span>{money(budget.spentMinor, budget.currency)} з {money(budget.plannedAmountMinor, budget.currency)}</span>
-        <progress max="100" value={Math.min(100, budget.percentage)} />
-        <div><small>{budget.exceeded ? `Перевищено на ${money(Math.abs(budget.remainingMinor), budget.currency)}` : `Залишок: ${money(budget.remainingMinor, budget.currency)}`}</small><span className="planning-actions"><button aria-label="Редагувати бюджет" onClick={() => { setEditingBudget(budget); setName(budget.name); setAmount(String(budget.plannedAmountMinor / 100).replace('.', ',')); setCadence(budget.cadence); setRollover(budget.rolloverEnabled); setWarning(String(budget.warningPercent)); setScope(budget.categoryId ? 'category' : budget.projectId ? 'project' : 'all'); setScopeId(budget.categoryId || budget.projectId || ''); setError(''); setDialogOpen(true); }}><Pencil size={15} /></button><button aria-label="Видалити бюджет" onClick={() => window.confirm(`Видалити бюджет «${budget.name}»?`) && void financeApi.deleteBudget(budget.id).then(load)}><Trash2 size={15} /></button></span></div>
+        <AuthorLabel ownerId={budget.ownerId} ownerName={budget.ownerName}/>
+        <div className="budget-progress"><span style={{ width: `${Math.min(100, Math.max(0, budget.percentage))}%`, background: budget.percentage >= 100 ? '#ff6b57' : budget.percentage >= budget.warningPercent ? '#ffc35b' : '#8b857b' }} /></div>
+        <div><small>{budget.exceeded ? `Перевищено на ${money(Math.abs(budget.remainingMinor), budget.currency)}` : `Залишок: ${money(budget.remainingMinor, budget.currency)}`}</small><span className="planning-actions"><button aria-label="Редагувати бюджет" onClick={event => { event.stopPropagation(); editBudget(budget); }}><Pencil size={15} /></button><button aria-label="Видалити бюджет" onClick={event => { event.stopPropagation(); if(window.confirm(`Видалити бюджет «${budget.name}»?`))void financeApi.deleteBudget(budget.id).then(load); }}><Trash2 size={15} /></button></span></div>
       </article>)}
     </div>}
     {tab === 'recurring' && <>
-      <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency} · {rule.accountId ? accounts.find(account => account.id === rule.accountId)?.name || 'Рахунок' : 'Обрати під час оплати'}</span><div><button onClick={() => { setEditingRule(rule); setName(rule.description || ''); setAmount(String(rule.amountMinor / 100).replace('.', ',')); setOperationType(rule.type); setAccountId(rule.accountId || ''); setRecurringCategoryId(rule.categoryId || ''); setCadence(rule.frequency); setDate(rule.startDate); setError(''); setDialogOpen(true); }}>Редагувати</button><button className="danger-action" onClick={() => window.confirm(`Видалити регулярну операцію «${rule.description || 'без назви'}»?`) && void financeApi.deleteRecurring(rule.id).then(load)}>Видалити</button></div></article>)}</div>
+      <div className="planning-list">{rules.map(rule => <article key={rule.id}><strong>{rule.description || 'Регулярна операція'}</strong><span>{money(rule.amountMinor, rule.currency)} · {rule.frequency} · {rule.accountId ? accounts.find(account => account.id === rule.accountId)?.name || 'Рахунок' : 'Обрати під час оплати'}</span><AuthorLabel ownerId={rule.ownerId} ownerName={rule.ownerName}/><div><button onClick={() => { setEditingRule(rule); setName(rule.description || ''); setAmount(String(rule.amountMinor / 100).replace('.', ',')); setOperationType(rule.type); setAccountId(rule.accountId || ''); setRecurringCategoryId(rule.categoryId || ''); setCadence(rule.frequency); setDate(rule.startDate); setError(''); setDialogOpen(true); }}>Редагувати</button><button className="danger-action" onClick={() => window.confirm(`Видалити регулярну операцію «${rule.description || 'без назви'}»?`) && void financeApi.deleteRecurring(rule.id).then(load)}>Видалити</button></div></article>)}</div>
       <button className="secondary-action" onClick={() => void financeApi.generateOccurrences().then(load)}>Оновити календар</button>
-      <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><div><button onClick={() => { setPaymentOccurrence(item); setPaymentAccountId(rule?.accountId || accounts[0]?.id || ''); setPaymentAmount(String(amountMinor / 100).replace('.', ',')); }}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
+      <div className="planning-list">{occurrences.filter(item => item.status === 'pending' && rules.some(rule => rule.id === item.ruleId)).map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const amountMinor = item.amountMinor ?? rule?.amountMinor ?? 0; const rawTitle = item.description?.trim() || rule?.description?.trim() || 'Регулярна операція'; const title = rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle; return <article key={item.id}><strong>{title}</strong><span>{shortDate(`${item.dueDate}T12:00:00Z`)} · {money(amountMinor, rule?.currency || 'UAH')}</span><AuthorLabel ownerId={rule?.ownerId} ownerName={rule?.ownerName}/><div><button onClick={() => { setPaymentOccurrence(item); setPaymentAccountId(rule?.accountId || accounts[0]?.id || ''); setPaymentAmount(String(amountMinor / 100).replace('.', ',')); }}>Підтвердити</button><button onClick={() => void financeApi.skipOccurrence(item.id).then(load)}>Пропустити</button></div></article>; })}</div>
     </>}
 
     {dialogOpen && tab === 'budgets' && <Dialog title={editingBudget ? 'Редагувати бюджет' : 'Новий бюджет'} onClose={() => { setEditingBudget(null); setDialogOpen(false); }}>

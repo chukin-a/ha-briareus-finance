@@ -11,3 +11,13 @@ dev/
 /finance/app/frontend/test-results
 /finance/app/backend/data/finance.sqlite
 /finance/app/backend/scripts/seed-money-flow.mjs
+/finance/app/backend/scripts/
+!/finance/app/backend/scripts/
+/finance/app/backend/scripts/*
+!/finance/app/backend/scripts/seed-ids.mjs
+!/finance/app/backend/scripts/seed-test-users.mjs
+!/finance/app/backend/scripts/seed-analytics-density.mjs
+!/finance/app/backend/scripts/normalize-test-categories.mjs
+!/finance/app/backend/scripts/normalize-test-accounts.mjs
+!/finance/app/backend/scripts/repair-test-data.mjs
+!/finance/app/backend/scripts/seed-planning-data.mjs

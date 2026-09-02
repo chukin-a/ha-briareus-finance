@@ -5,6 +5,7 @@ import { PeriodPicker, type CustomRange, type PeriodPreset } from '../components
 import { money, parseMinor } from '../lib/money';
 import type { Account, PaymentItem, PaymentsReport } from '../types/finance';
 import { Dialog } from '../components/Dialog';
+import { AuthorLabel } from '../components/AuthorLabel';
 
 type PaymentFilter = 'all' | PaymentItem['kind'];
 
@@ -63,7 +64,7 @@ export function Payments({ accounts, period, range, onPeriodChange, onRangeChang
       {payments.map(payment=><article key={payment.id} className={payment.kind}>
         <div className="payment-date"><strong>{payment.dueDate.slice(8,10)}</strong><span>{payment.dueDate.slice(5,7)}</span></div>
         <div className="payment-icon"><PaymentIcon kind={payment.kind}/></div>
-        <div className="payment-copy"><strong>{payment.title}</strong><span>{kindLabel(payment.kind)} · {payment.accountName}</span></div>
+        <div className="payment-copy"><strong>{payment.title}</strong><span>{kindLabel(payment.kind)} · {payment.accountName}</span><AuthorLabel ownerId={payment.ownerId} ownerName={payment.ownerName}/></div>
         <b>{money(payment.amountMinor,payment.currency)}</b>
         <div className="payment-actions">
           {payment.action==='confirm_or_skip'&&<button disabled={busy===payment.id} onClick={()=>{setConfirming(payment);setAccountId(payment.accountId || accounts[0]?.id || '');setPaymentAmount(String(payment.amountMinor / 100).replace('.', ','));}}><Check size={15}/>Підтвердити</button>}

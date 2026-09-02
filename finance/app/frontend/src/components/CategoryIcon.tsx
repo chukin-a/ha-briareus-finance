@@ -1,5 +1,5 @@
 import {
-  Apple, Banknote, Bike, BookOpen, BriefcaseBusiness, Building2, Bus, Cake, Camera, Car,
+  Apple, Banknote, Bike, BookOpen, BriefcaseBusiness, Building2, Bus, Cake, Camera, Car, Baby,
   Circle, Coffee, CreditCard, Droplets, Dumbbell, Factory, Film, Fish, Fuel, Gamepad2,
   Gift, GraduationCap, Hammer, HandCoins, HeartPulse, Hospital, House, KeyRound, Laptop, Lightbulb,
   Martini, Megaphone, Monitor, Music, Package, PawPrint, Pizza, Plane, Receipt, Rocket,
@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
-  circle: Circle, briefcase: BriefcaseBusiness, wallet: Wallet, gift: Gift, utensils: Utensils,
+  circle: Circle, briefcase: BriefcaseBusiness, wallet: Wallet, gift: Gift, utensils: Utensils, baby: Baby,
   house: House, car: Car, wine: Wine, banknote: Banknote, coffee: Coffee, shopping: ShoppingBag,
   health: HeartPulse, sport: Dumbbell, travel: Plane, phone: Smartphone, entertainment: Tv,
   music: Music, education: GraduationCap, clothing: Shirt, pets: PawPrint, bus: Bus, fuel: Fuel,

@@ -10,10 +10,11 @@ type HeadersMap = Record<string, string | string[] | undefined>;
 class PlanningController {
   constructor(private finance: FinanceService, private extended: ExtendedFinanceService) {}
   @Get('budgets') listBudgets(@Query() query: PeriodQueryDto) { return this.extended.listBudgets(query); }
+  @Get('budgets/:id') details(@Param('id') id:string, @Query() query:PeriodQueryDto) { return this.extended.budgetDetailsForPeriod(id, query); }
   @Post('budgets') async createBudget(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.extended.createBudget(b, await this.finance.getCurrentUser(h)); }
   @Patch('budgets/:id') async updateBudget(@Param('id') id:string,@Headers() h:HeadersMap,@Body() b:Record<string,unknown>){return this.extended.updateBudget(id,b,await this.finance.getCurrentUser(h));}
   @Delete('budgets/:id') async deleteBudget(@Param('id') id:string,@Headers() h:HeadersMap){return this.extended.deleteBudget(id,await this.finance.getCurrentUser(h));}
-  @Get('budgets/:id/progress') progress(@Param('id') id: string, @Query() query: PeriodQueryDto) { return this.extended.budgetProgress(id, resolvePeriod(query).from); }
+  @Get('budgets/:id/progress') progress(@Param('id') id: string, @Query() query: PeriodQueryDto) { const period = resolvePeriod(query); return this.extended.budgetProgress(id, period.from, period.to); }
   @Post('budgets/:id/rollover') rollover(@Param('id') id:string){return this.extended.rolloverBudget(id);}
   @Get('recurring') recurring() { return this.finance.listRecurring(); }
   @Post('recurring') async createRecurring(@Headers() h: HeadersMap, @Body() b: Record<string, unknown>) { return this.finance.createRecurring(b as never, await this.finance.getCurrentUser(h)); }

@@ -7,9 +7,10 @@ const account = (id: string, name: string) => ({ id, ownerId: 'owner', name, typ
 describe('TransactionList', () => {
   it('shows transfer source and destination without a category icon', () => {
     render(<TransactionList accounts={[account('from', 'Тестовий рахунок 1'), account('to', 'Тестовий рахунок 2')]} categories={[]} transactions={[{
-      id: 'transfer', accountId: 'from', relatedAccountId: 'to', type: 'transfer', amountMinor: 10000, currency: 'UAH', description: null, occurredAt: '2026-09-01T12:00:00.000Z', categoryId: null,
+      id: 'transfer', ownerId: 'owner', ownerName: 'Антон', accountId: 'from', relatedAccountId: 'to', type: 'transfer', amountMinor: 10000, currency: 'UAH', description: null, occurredAt: '2026-09-01T12:00:00.000Z', categoryId: null,
     }]} />);
     expect(screen.getByText('Переказ')).toBeInTheDocument();
     expect(screen.getByText('Тестовий рахунок 1 → Тестовий рахунок 2')).toBeInTheDocument();
+    expect(screen.getByText('Антон')).toBeInTheDocument();
   });
 });

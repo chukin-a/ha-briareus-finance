@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.7
+
+- Fixed analytics income drill-down to show income categories and transactions.
+- Fixed full-circle pie-chart rendering when only one category exists.
+- Added selected-period budget limits for monthly, quarterly, and yearly budgets.
+- Added warning and exceeded budget progress states on overview and planning pages.
+- Added varied local analytics income and expense data plus recurring payments and installment obligations.
+- Added guarded development data repair and seed scripts without affecting production.
+
 ## 0.5.6
 
 - Added quick transaction creation from the overview and transactions pages through a floating action button.
