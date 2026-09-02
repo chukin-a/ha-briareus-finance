@@ -1,33 +1,72 @@
-# HA Briaureus Finance
+# HA Briareus Finance
 
-Minimal Home Assistant add-on starter with:
+Аддон Home Assistant для обліку особистих і сімейних фінансів.
 
-- NestJS backend
-- Angular frontend
-- Home Assistant Ingress
-- persistent `/config`
-- SQLite-ready layout
-- UAH configuration
+Він допомагає вести рахунки, контролювати бюджети, планувати платежі та аналізувати доходи й витрати. Усі фінансові дані зберігаються локально у Home Assistant.
 
-## Local addon repository
+## Швидкий старт
 
-Copy the repository to:
+1. Натисніть кнопку, щоб додати репозиторій до Home Assistant:
 
-`/addons/ha-finance`
+   [![Додати репозиторій до Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fchukin-a%2Fha-briareus-finance)
 
-Then in Home Assistant:
+2. Відкрийте **Налаштування → Додатки → Магазин додатків**.
+3. Встановіть **HA Briareus Finance**.
+4. Перевірте налаштування та запустіть додаток.
+5. Натисніть **Відкрити вебінтерфейс**.
 
-Settings → Add-ons → Add-on Store → ⋮ → Check for updates
+Додаток працює через Home Assistant Ingress. Підтримуються архітектури `amd64` та `aarch64`.
 
-## Health endpoint
+## Можливості
 
-Inside Ingress:
+### Рахунки та операції
 
-`./api/health`
+- дебетові рахунки, готівка та кредитні картки;
+- доходи, витрати й перекази між рахунками;
+- категорії з підкатегоріями та власними іконками;
+- проєкти з витратами за місяцями та списком операцій;
+- автор операції та контроль доступу.
 
-## Next steps
+### Планування
 
-1. Add SQLite schema/migrations.
-2. Add Accounts / Transactions / Categories / Budgets.
-3. Add HA API service for sensors/events.
-4. Add authentication/Ingress awareness.
+- місячні, квартальні та річні бюджети;
+- бюджети за категоріями, підкатегоріями та проєктами;
+- прогрес бюджету з попередженням про наближення ліміту;
+- регулярні платежі та календар зобов’язань;
+- розстрочки та дострокове погашення;
+- розрахунок пільгових періодів кредитних карток.
+
+### Аналітика
+
+- доходи та витрати за вибраний період;
+- динаміка балансу;
+- кругові діаграми за категоріями з переходом до деталізації;
+- витрати за місяцями за останні 12 місяців;
+- 10 найбільших витрат;
+- список операцій у кожній деталізації.
+
+### Інше
+
+- імпорт фінансових операцій із попереднім переглядом;
+- заповнення операції за QR-кодом чека;
+- опційна інтеграція з податковим API.
+
+## Налаштування
+
+Параметри змінюються на сторінці налаштувань додатка Home Assistant.
+
+| Параметр | Типове значення | Призначення |
+| --- | --- | --- |
+| `currency` | `UAH` | Валюта застосунку |
+| `timezone` | `Europe/Kyiv` | Часовий пояс розрахунків і дат |
+| `sensors_enabled` | `false` | Увімкнення сенсорів Home Assistant |
+| `sensor_refresh_interval` | `300` | Інтервал оновлення сенсорів у секундах |
+| `warning_days` | `5` | Кількість днів для попередження про платіж |
+| `upload_limit_mb` | `10` | Максимальний розмір файлу для імпорту |
+| `tax_api_enabled` | `false` | Увімкнення податкового API |
+
+## Дані
+
+Дані зберігаються у базі SQLite в каталозі Home Assistant:
+
+`/config/finance.sqlite`
