@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, CalendarClock, CircleAlert, Target } from 'lucide-react';
+import { ArrowRight, CalendarClock, CircleAlert, Settings, Target } from 'lucide-react';
 import type { Account, BudgetProgress, Category, InstallmentPlan, RecurringOccurrence, RecurringRule, Transaction } from '../types/finance';
 import type { Page } from '../components/BottomNav';
 import { SummaryCard } from '../components/SummaryCard';
@@ -7,6 +7,7 @@ import { TransactionList } from '../components/TransactionList';
 import { PeriodPicker, type CustomRange, type PeriodPreset } from '../components/PeriodPicker';
 import { financeApi } from '../api/client';
 import { money } from '../lib/money';
+import { TransactionFab } from '../components/TransactionFab';
 
 function selectedDateRange(period: PeriodPreset, custom: CustomRange) {
   if (period === 'custom') return custom;
@@ -51,7 +52,7 @@ function creditPaymentsFor(account: Account, transactions: Transaction[]) {
   });
 }
 
-export function Dashboard({ accounts, transactions, categories, period, range, onPeriodChange, onRangeChange, onNavigate }: { accounts: Account[]; transactions: Transaction[]; categories: Category[]; period: PeriodPreset; range: CustomRange; onPeriodChange: (period: PeriodPreset) => void; onRangeChange: (range: CustomRange) => void; onNavigate:(page:Page)=>void }) {
+export function Dashboard({ accounts, transactions, categories, period, range, onPeriodChange, onRangeChange, onNavigate, onSettings, onCreateTransaction }: { accounts: Account[]; transactions: Transaction[]; categories: Category[]; period: PeriodPreset; range: CustomRange; onPeriodChange: (period: PeriodPreset) => void; onRangeChange: (range: CustomRange) => void; onNavigate:(page:Page)=>void; onSettings:()=>void; onCreateTransaction:()=>void }) {
   const [budgets,setBudgets]=useState<BudgetProgress[]>([]),[occurrences,setOccurrences]=useState<RecurringOccurrence[]>([]),[plans,setPlans]=useState<InstallmentPlan[]>([]),[rules,setRules]=useState<RecurringRule[]>([]),[creditPayments,setCreditPayments]=useState<Awaited<ReturnType<typeof financeApi.getCreditPayments>>>([]);
   useEffect(()=>{void Promise.all([financeApi.getBudgets(period, range),financeApi.getOccurrences(),financeApi.getInstallments(),financeApi.getRecurring(),financeApi.getCreditPayments()]).then(([b,o,p,r,c])=>{setBudgets(b);setOccurrences(o);setPlans(p);setRules(r);setCreditPayments(c)}).catch(()=>undefined)},[transactions, period, range]);
   const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amountMinor, 0);
@@ -73,11 +74,11 @@ export function Dashboard({ accounts, transactions, categories, period, range, o
   ].filter(item => item.dueDate >= paymentRange.from && item.dueDate < paymentRange.to)
     .sort((left, right) => left.dueDate.localeCompare(right.dueDate));
   return <main className="screen dashboard"><header className="screen-header"><div><span className="eyebrow">BRIAREUS FINANCE</span></div></header>
-    <div className="period"><PeriodPicker value={period} range={range} onChange={onPeriodChange} onRangeChange={onRangeChange} /></div><SummaryCard income={income} expenses={expenses} periodBalance={income-expenses} balance={cashBalance} creditDebt={creditDebt} availableCredit={availableCredit} />
+    <div className="period dashboard-period"><PeriodPicker value={period} range={range} onChange={onPeriodChange} onRangeChange={onRangeChange} /><button className="dashboard-settings" aria-label="Налаштування" onClick={onSettings}><Settings size={20} /></button></div><SummaryCard income={income} expenses={expenses} periodBalance={income-expenses} balance={cashBalance} creditDebt={creditDebt} availableCredit={availableCredit} />
     <section className="section-title"><h2>Планування</h2><button onClick={()=>onNavigate('budgets')}>Усі <ArrowRight size={16}/></button></section>
     <div className="dashboard-budgets">{budgets.length===0?<button className="budget-empty" onClick={()=>onNavigate('budgets')}><Target/><span><strong>Створіть перший бюджет</strong><small>Контролюйте ліміти за категоріями та проєктами</small></span></button>:budgets.slice(0,3).map(b=><article key={b.id} className={b.exceeded?'over':''}><div><strong>{b.name}</strong><span>{b.percentage}%</span></div><progress max="100" value={Math.min(100,b.percentage)}/><small>{money(b.spentMinor,b.currency)} з {money(b.plannedAmountMinor,b.currency)}</small></article>)}</div>
     {creditPayments.length>0&&<><section className="section-title"><h2>Погашення кредитних карток</h2></section><div className="upcoming">{creditPayments.map(payment=><article key={payment.id}><CircleAlert/><span><strong>{payment.title}</strong><small>{payment.status === 'overdue' ? `Прострочено: ${money(payment.amountMinor,payment.currency)} після ${payment.dueDate}. Пільговий період втрачено` : `Сплатити ${money(payment.amountMinor,payment.currency)} до ${payment.dueDate}, щоб зберегти пільговий період`}</small></span></article>)}</div></>}
     {upcomingPayments.length>0&&<><section className="section-title"><h2>Платежі за період</h2><button onClick={()=>onNavigate('budgets')}>Календар</button></section><div className="upcoming">{upcomingPayments.map(payment=><article key={payment.id}>{payment.kind==='installment'?<CircleAlert/>:<CalendarClock/>}<span><strong>{payment.title}</strong><small>{payment.dueDate}{payment.amountMinor?` · ${money(payment.amountMinor,payment.currency)}`:''}</small></span></article>)}</div></>}
-    <section className="section-title"><h2>Останні транзакції</h2><button onClick={()=>onNavigate('transactions')}>Усі</button></section><TransactionList transactions={transactions} accounts={accounts} categories={categories} />
+    <section className="section-title"><h2>Останні транзакції</h2><button onClick={()=>onNavigate('transactions')}>Усі</button></section><TransactionList transactions={transactions} accounts={accounts} categories={categories} /><TransactionFab onClick={onCreateTransaction}/>
   </main>;
 }

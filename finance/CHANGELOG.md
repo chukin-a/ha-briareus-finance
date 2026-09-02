@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.6
+
+- Added quick transaction creation from the overview and transactions pages through a floating action button.
+- Added QR receipt filling directly inside the transaction form.
+- Restored the original bottom navigation and added settings access to the overview and transactions headers.
+- Connected project drill-down to the active planning screen and removed the unused projects view.
+
 ## 0.5.5
 
 - Added a dedicated project details screen with monthly expense breakdown and project transactions.

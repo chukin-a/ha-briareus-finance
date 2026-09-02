@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Archive, Folder, Pencil, Plus, Target, Trash2 } from 'lucide-react';
+import { Folder, Pencil, Plus, Target, Trash2 } from 'lucide-react';
 import { financeApi } from '../api/client';
 import { CategoryOptions } from '../components/CategoryOptions';
 import { Dialog } from '../components/Dialog';
@@ -7,6 +7,7 @@ import { InstallmentsPanel } from '../components/InstallmentsPanel';
 import { money, parseMinor, shortDate } from '../lib/money';
 import type { Account, BudgetProgress, Category, InstallmentPlan, Project, RecurringOccurrence, RecurringRule } from '../types/finance';
 import type { CustomRange, PeriodPreset } from '../components/PeriodPicker';
+import { ProjectDetails } from './ProjectDetails';
 
 type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports';
 const toMinor = parseMinor;
@@ -47,6 +48,8 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
   const [paymentOccurrence, setPaymentOccurrence] = useState<RecurringOccurrence | null>(null);
   const [paymentAccountId, setPaymentAccountId] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectDetails, setProjectDetails] = useState<Awaited<ReturnType<typeof financeApi.getProject>> | null>(null);
 
   async function load() {
     try {
@@ -68,6 +71,8 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
 
   function switchTab(value: Tab) {
     setTab(value);
+    setSelectedProjectId(null);
+    setProjectDetails(null);
     setDialogOpen(false);
     setError('');
   }
@@ -131,6 +136,26 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
       setError(cause instanceof Error ? cause.message : 'Помилка імпорту');
     }
   }
+  async function openProject(project: Project) {
+    try {
+      const details = await financeApi.getProject(project.id);
+      setProjectDetails(details);
+      setSelectedProjectId(project.id);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Не вдалося завантажити проєкт');
+    }
+  }
+  async function archiveProject() {
+    if (!projectDetails || !window.confirm(`Архівувати «${projectDetails.project.name}»?`)) return;
+    try {
+      await financeApi.archiveProject(projectDetails.project.id);
+      setSelectedProjectId(null);
+      setProjectDetails(null);
+      onChanged();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Не вдалося архівувати проєкт');
+    }
+  }
   const labels: Record<Tab, string> = {
     budgets: 'Бюджети',
     projects: 'Проєкти',
@@ -139,6 +164,8 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
     imports: 'Імпорт',
   };
   const actionLabel = tab === 'budgets' ? 'Новий бюджет' : tab === 'projects' ? 'Новий проєкт' : tab === 'recurring' ? 'Нова операція' : 'Імпортувати';
+
+  if (tab === 'projects' && selectedProjectId && projectDetails) return <ProjectDetails data={projectDetails} onBack={() => { setSelectedProjectId(null); setProjectDetails(null); }} onArchive={() => void archiveProject()} />;
 
   return <main className="screen">
     <header className="screen-header">
@@ -156,7 +183,7 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
     {tab === 'installments' && <InstallmentsPanel accounts={accounts} plans={plans} reload={load} onChanged={onChanged} />}
     {tab === 'projects' && <div className="planning-list">
       {!projects.length && <div className="empty-state">Ще немає проєктів.</div>}
-      {projects.map(project => <article key={project.id}><div><Folder size={20} /><strong>{project.name}</strong><span>{project.percentage || 0}%</span></div><progress max="100" value={Math.min(100, project.percentage || 0)} /><small>{money(project.spentMinor || 0, project.currency)} з {money(project.plannedAmountMinor, project.currency)}</small><button onClick={() => window.confirm(`Архівувати «${project.name}»?`) && void financeApi.archiveProject(project.id).then(onChanged)}><Archive size={16} /> Архівувати</button></article>)}
+      {projects.map(project => <article key={project.id} role="button" tabIndex={0} onClick={() => void openProject(project)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void openProject(project); }}><div><Folder size={20} /><strong>{project.name}</strong><span>{project.percentage || 0}%</span></div><progress max="100" value={Math.min(100, project.percentage || 0)} /><small>{money(project.spentMinor || 0, project.currency)} з {money(project.plannedAmountMinor, project.currency)}</small></article>)}
     </div>}
     {tab === 'budgets' && <div className="planning-list">
       {!budgets.length && <div className="empty-state">Ще немає бюджетів.</div>}

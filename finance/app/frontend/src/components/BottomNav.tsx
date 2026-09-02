@@ -1,6 +1,6 @@
 import { CalendarClock, ChartNoAxesCombined, ChartPie, List, Settings, Target, WalletCards } from 'lucide-react';
 
-export type Page = 'dashboard' | 'analytics' | 'payments' | 'accounts' | 'transactions' | 'budgets' | 'settings' | 'categories' | 'projects' | 'users';
+export type Page = 'dashboard' | 'analytics' | 'payments' | 'accounts' | 'transactions' | 'budgets' | 'settings' | 'categories' | 'users';
 
 const items = [
   { id: 'dashboard', label: 'Огляд', Icon: ChartNoAxesCombined },
@@ -13,5 +13,6 @@ const items = [
 ] as const;
 
 export function BottomNav({ page, onChange }: { page: Page; onChange: (page: Page) => void }) {
-  return <nav className="bottom-nav">{items.map(({ id, label, Icon }) => <button key={id} className={page === id ? 'active' : ''} onClick={() => onChange(id)}><Icon /><span>{label}</span></button>)}</nav>;
+  const renderItem = ({ id, label, Icon }: typeof items[number]) => <button key={id} className={page === id ? 'active' : ''} onClick={() => onChange(id)}><Icon /><span>{label}</span></button>;
+  return <nav className="bottom-nav">{items.map(renderItem)}</nav>;
 }
