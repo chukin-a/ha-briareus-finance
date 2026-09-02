@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.9
+
+- Fixed credit-card grace-period calculations by separating obligations by spending month.
+- Applied card top-ups to the oldest outstanding period before the current period.
+- Added calendar-month migration for existing budgets and support for monthly, quarterly, and yearly budgets.
+
 ## 0.4.8
 
 - Added backend coverage for financial domain rules, planning, security, SSE, heartbeat, outbox delivery, and DPS receipt parsing.

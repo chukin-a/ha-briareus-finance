@@ -91,6 +91,31 @@ test('budget progress includes descendants of selected parent category but exclu
   assert.equal((await service.budgetProgress('budget-1')).spentMinor, 2500);
 });
 
+test('budgets use calendar periods for quarterly and yearly cadence', async () => {
+  const saved = [];
+  const service = extendedService({
+    budgets: repo({ save: async value => { saved.push(value); return value; }, findOneBy: async () => saved[0] }),
+    budgetPeriods: repo({ save: async value => value }),
+    transactions: repo({ find: async () => [] }),
+    categories: repo({ find: async () => [] }),
+  });
+  const quarterly = await service.createBudget({ name: 'Quarter', plannedAmountMinor: 10000, periodStart: '2026-02-15', cadence: 'quarterly' }, owner);
+  assert.deepEqual([quarterly.periodStart, quarterly.periodEnd], ['2026-01-01', '2026-04-01']);
+  saved.length = 0;
+  const yearly = await service.createBudget({ name: 'Year', plannedAmountMinor: 10000, periodStart: '2026-08-15', cadence: 'yearly' }, owner);
+  assert.deepEqual([yearly.periodStart, yearly.periodEnd], ['2026-01-01', '2027-01-01']);
+});
+
+test('credit card payments are split by statement month and applied to the oldest month first', () => {
+  const service = extendedService();
+  const account = { id: 'card', name: 'Тестова кредитна картка', type: 'credit_card', currency: 'UAH', gracePeriodRule: 'next_month_end', gracePeriodDay: null };
+  const tx = (type, occurredOn, amountMinor) => ({ accountId: 'card', type, occurredOn, occurredAt: `${occurredOn}T12:00:00.000Z`, amountMinor });
+  const items = service.creditPaymentItems(account, [
+    tx('expense', '2026-08-10', 30000), tx('expense', '2026-09-05', 4000), tx('income', '2026-08-20', 4000),
+  ]);
+  assert.deepEqual(items.map(item => [item.amountMinor, item.dueDate]), [[26000, '2026-09-30'], [4000, '2026-10-31']]);
+});
+
 test('non-owner cannot update a transaction', async () => {
   const service = financeService({ transactions: repo({ findOneBy: async () => ({ id: 'tx-1', ownerId: 'another' }) }) });
   await assert.rejects(() => service.updateTransaction('tx-1', { description: 'Nope' }, owner), /Only the transaction owner/);
