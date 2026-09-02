@@ -10,14 +10,14 @@ export interface Account {
 
 export interface Transaction {
   id: string; accountId: string; relatedAccountId: string | null; type: TransactionType;
-  amountMinor: number; currency: string; description: string | null; occurredAt: string; categoryId: string | null; projectId?: string | null; receiptId?: string | null; tags?: string[]; metadata?: Record<string, unknown>; metadataJson?: string | null; tagsJson?: string | null;
+  amountMinor: number; currency: string; description: string | null; occurredAt: string; occurredOn?: string; categoryId: string | null; projectId?: string | null; receiptId?: string | null; tags?: string[]; metadata?: Record<string, unknown>; metadataJson?: string | null; tagsJson?: string | null;
 }
 
 export interface Category { id: string; name: string; type: 'income' | 'expense'; parentId: string | null; icon: string; color: string; sortOrder: number; archived?: boolean; }
 export interface Project { id: string; name: string; plannedAmountMinor: number; currency: string; spentMinor?:number; remainingMinor?:number; percentage?:number; status?: 'active' | 'completed' | 'archived'; endOn?: string | null; }
 
 export interface User { id: string; name: string; createdAt?: string; lastSeenAt?: string | null; blocked?: boolean; current?: boolean; }
-export interface Budget { id: string; name: string; categoryId: string | null; projectId: string | null; periodStart: string; periodEnd: string; plannedAmountMinor: number; currency: string; active?: boolean; cadence: 'monthly' | 'quarterly' | 'custom'; rolloverEnabled: boolean; warningPercent: number; }
+export interface Budget { id: string; name: string; categoryId: string | null; projectId: string | null; periodStart: string; periodEnd: string; plannedAmountMinor: number; currency: string; active?: boolean; cadence: 'monthly' | 'quarterly' | 'yearly'; rolloverEnabled: boolean; warningPercent: number; }
 export interface BudgetProgress extends Budget { spentMinor: number; remainingMinor: number; percentage: number; exceeded: boolean; }
 export interface RecurringRule { id:string; accountId:string|null; type:'income'|'expense'; amountMinor:number; currency:string; frequency:string; dayOfMonth?:number|null; startDate:string; endDate?:string|null; categoryId?:string|null; projectId?:string|null; description:string|null; active:boolean; }
 export interface RecurringOccurrence { id:string; ruleId:string; dueDate:string; status:string; amountMinor:number|null; description:string|null; }

@@ -24,14 +24,31 @@ function selectedDateRange(period: PeriodPreset, custom: CustomRange) {
   return { from: `${year}-01-01`, to: `${year + 1}-01-01` };
 }
 
-function creditDeadline(account: Account) {
-  if (!account.gracePeriodRule) return null;
-  const current = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const [year, month] = current.split('-').map(Number);
-  if (account.gracePeriodRule === 'next_month_end') return new Date(Date.UTC(year, month + 1, 0)).toISOString().slice(0, 10);
-  if (!account.gracePeriodDay) return null;
-  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(year, month, Math.min(account.gracePeriodDay, lastDay))).toISOString().slice(0, 10);
+function creditPaymentsFor(account: Account, transactions: Transaction[]) {
+  if (!account.gracePeriodRule) return [];
+  const charges = new Map<string, number>();
+  transactions.filter(tx => tx.accountId === account.id && tx.type === 'expense').forEach(tx => {
+    const month = (tx.occurredOn || tx.occurredAt.slice(0, 10)).slice(0, 7);
+    charges.set(month, (charges.get(month) || 0) + tx.amountMinor);
+  });
+  transactions.filter(tx => tx.accountId === account.id && tx.type === 'income').sort((a, b) => (a.occurredOn || a.occurredAt).localeCompare(b.occurredOn || b.occurredAt)).forEach(payment => {
+    let remaining = payment.amountMinor;
+    for (const month of [...charges.keys()].sort()) {
+      const open = charges.get(month) || 0;
+      const applied = Math.min(open, remaining);
+      charges.set(month, open - applied);
+      remaining -= applied;
+      if (!remaining) break;
+    }
+  });
+  return [...charges.entries()].filter(([, amountMinor]) => amountMinor > 0).map(([month, amountMinor]) => {
+    const [year, monthNumber] = month.split('-').map(Number);
+    const nextMonth = new Date(Date.UTC(year, monthNumber, 1));
+    const dueDate = account.gracePeriodRule === 'next_month_end'
+      ? new Date(Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 0)).toISOString().slice(0, 10)
+      : new Date(Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth(), Math.min(account.gracePeriodDay || 1, new Date(Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 0)).getUTCDate()))).toISOString().slice(0, 10);
+    return { id: `${account.id}:${month}`, dueDate, title: account.name, amountMinor, currency: account.currency };
+  });
 }
 
 export function Dashboard({ accounts, transactions, categories, period, range, onPeriodChange, onRangeChange, onNavigate }: { accounts: Account[]; transactions: Transaction[]; categories: Category[]; period: PeriodPreset; range: CustomRange; onPeriodChange: (period: PeriodPreset) => void; onRangeChange: (range: CustomRange) => void; onNavigate:(page:Page)=>void }) {
@@ -43,11 +60,7 @@ export function Dashboard({ accounts, transactions, categories, period, range, o
   const creditDebt = accounts.filter(a=>a.currency==='UAH'&&a.type==='credit_card'&&a.creditLimitMinor!==null).reduce((sum, account) => sum + Math.max(0, account.creditLimitMinor! - account.balanceMinor), 0);
   const availableCredit = accounts.filter(a=>a.currency==='UAH'&&a.type==='credit_card').reduce((sum, account) => sum + Math.max(0, account.balanceMinor), 0);
   const paymentRange = selectedDateRange(period, range);
-  const creditPayments = accounts.filter(account => account.type === 'credit_card' && account.creditLimitMinor !== null).flatMap(account => {
-    const dueDate = creditDeadline(account);
-    const amountMinor = Math.max(0, account.creditLimitMinor! - account.balanceMinor);
-    return dueDate && amountMinor > 0 ? [{ id: account.id, dueDate, title: account.name, amountMinor, currency: account.currency }] : [];
-  }).sort((left, right) => left.dueDate.localeCompare(right.dueDate));
+  const creditPayments = accounts.filter(account => account.type === 'credit_card' && account.creditLimitMinor !== null).flatMap(account => creditPaymentsFor(account, transactions)).sort((left, right) => left.dueDate.localeCompare(right.dueDate));
   const upcomingPayments = [
     ...occurrences.filter(item => item.status === 'pending').map(item => { const rule = rules.find(candidate => candidate.id === item.ruleId); const rawTitle = item.description || rule?.description || 'Регулярна операція'; return { id: `recurring:${item.id}`, kind: 'recurring' as const, dueDate: item.dueDate, title: rawTitle === item.dueDate ? 'Регулярна операція' : rawTitle, amountMinor: item.amountMinor ?? rule?.amountMinor ?? 0, currency: rule?.currency || 'UAH' }; }),
     ...plans.flatMap(plan => (plan.obligations || []).filter(item => item.status !== 'paid').map(item => ({
