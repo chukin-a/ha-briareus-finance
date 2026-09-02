@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.8
+
+- Unified budget and project progress bars with the same layout, fill behavior, and warning colors.
+
 ## 0.5.7
 
 - Fixed analytics income drill-down to show income categories and transactions.

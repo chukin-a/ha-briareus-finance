@@ -10,6 +10,7 @@ import type { CustomRange, PeriodPreset } from '../components/PeriodPicker';
 import { ProjectDetails } from './ProjectDetails';
 import { BudgetDetails } from './BudgetDetails';
 import { AuthorLabel } from '../components/AuthorLabel';
+import { ProgressBar } from '../components/ProgressBar';
 
 type Tab = 'budgets' | 'projects' | 'recurring' | 'installments' | 'imports';
 const toMinor = parseMinor;
@@ -199,7 +200,7 @@ export function PlanningHub({ accounts, categories, projects, period, range, ref
     {tab === 'installments' && <InstallmentsPanel accounts={accounts} plans={plans} reload={load} onChanged={onChanged} />}
     {tab === 'projects' && <div className="planning-list">
       {!projects.length && <div className="empty-state">Ще немає проєктів.</div>}
-      {projects.map(project => <article key={project.id} role="button" tabIndex={0} onClick={() => void openProject(project)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void openProject(project); }}><div><Folder size={20} /><strong>{project.name}</strong><span>{project.percentage || 0}%</span></div><progress max="100" value={Math.min(100, project.percentage || 0)} /><small>{money(project.spentMinor || 0, project.currency)} з {money(project.plannedAmountMinor, project.currency)}</small><AuthorLabel ownerId={project.ownerId} ownerName={project.ownerName}/></article>)}
+      {projects.map(project => <article key={project.id} role="button" tabIndex={0} onClick={() => void openProject(project)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void openProject(project); }}><div><Folder size={20} /><strong>{project.name}</strong><span>{project.percentage || 0}%</span></div><ProgressBar value={project.percentage || 0} /><small>{money(project.spentMinor || 0, project.currency)} з {money(project.plannedAmountMinor, project.currency)}</small><AuthorLabel ownerId={project.ownerId} ownerName={project.ownerName}/></article>)}
     </div>}
     {tab === 'budgets' && <div className="planning-list">
       {!budgets.length && <div className="empty-state">Ще немає бюджетів.</div>}
