@@ -6,7 +6,7 @@ import { AuthorLabel } from './AuthorLabel';
 
 export function TransactionItem({ transaction, accounts, categories, onClick }: { transaction: Transaction; accounts: Account[]; categories: Category[]; onClick?: () => void }) {
   return <article className={`transaction${onClick ? ' transaction-clickable' : ''}`} onClick={onClick}>
-    <time>{shortDate(transaction.occurredAt)}</time>
+        <time>{shortDate(transaction.occurredOn || transaction.occurredAt)}</time>
     <div className={`transaction-icon ${transaction.type}`} title={transaction.type === 'transfer' ? 'Переказ' : categoryName(transaction, categories)} aria-label={transaction.type === 'transfer' ? 'Переказ' : categoryName(transaction, categories)}>
       <TransactionIcon transaction={transaction} categories={categories} />
     </div>

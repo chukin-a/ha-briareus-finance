@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { localDateFromIso } from '../../shared/domain/period';
 
 @Entity('transactions')
 export class TransactionEntity {
@@ -13,7 +14,8 @@ export class TransactionEntity {
   @Column({ type: 'varchar' }) currency!: string;
   @Column({ type: 'text', nullable: true }) description!: string | null;
   @Column({ name: 'occurred_at', type: 'varchar' }) occurredAt!: string;
-  @Column({ name: 'occurred_on', type: 'varchar' }) occurredOn!: string;
+  get occurredOn() { return localDateFromIso(this.occurredAt); }
+  set occurredOn(_value: string) { /* Derived from occurredAt; kept for legacy command compatibility. */ }
   @Column({ name: 'created_at', type: 'varchar' }) createdAt!: string;
   @Column({ name: 'updated_at', type: 'varchar', nullable: true }) updatedAt!: string | null;
   @Column({ name: 'transfer_group_id', type: 'varchar', nullable: true }) transferGroupId!: string | null;

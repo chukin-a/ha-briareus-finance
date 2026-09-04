@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.9
+
+- Replaced the redundant transaction calendar-date storage with a single `occurred_at` date-time field and added a migration for existing SQLite databases.
+- Added separate date and time inputs to the transaction form, including a date mask, calendar button, and native time picker support.
+- Preserved transaction dates during migration and fixed date display across transaction lists and details.
+
 ## 0.5.8
 
 - Unified budget and project progress bars with the same layout, fill behavior, and warning colors.

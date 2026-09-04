@@ -34,7 +34,7 @@ export function TransactionDetailsDialog({ transaction, accounts, categories, ta
       </div>
       <strong className={`transaction-details-amount ${transaction.type === 'income' ? 'income' : ''}`}>{prefix} {money(transaction.amountMinor, transaction.currency)}</strong>
       <dl className="transaction-details-grid">
-        <div><dt>Дата</dt><dd>{shortDate(transaction.occurredAt)}</dd></div>
+        <div><dt>Дата</dt><dd>{shortDate(transaction.occurredOn || transaction.occurredAt)}</dd></div>
         <div><dt>Рахунок</dt><dd>{target ? `${source} → ${target}` : source}</dd></div>
         <div className="transaction-details-author"><dt className="sr-only">Автор</dt><dd><AuthorLabel ownerId={transaction.ownerId} ownerName={transaction.ownerName} /></dd></div>
       </dl>
