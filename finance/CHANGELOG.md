@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+
+- Fixed transaction edits replacing the entered time with `12:00` when the calendar date was also submitted.
+
 ## 0.5.9
 
 - Replaced the redundant transaction calendar-date storage with a single `occurred_at` date-time field and added a migration for existing SQLite databases.
