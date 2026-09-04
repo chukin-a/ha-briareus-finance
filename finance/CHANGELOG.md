@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Added tap-to-inspect values for income and expense bars in the analytics trend chart on mobile devices.
+
 ## 0.6.0
 
 - Fixed transaction edits replacing the entered time with `12:00` when the calendar date was also submitted.
